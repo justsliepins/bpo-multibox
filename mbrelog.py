@@ -27,7 +27,7 @@ def _load_chars():
         for line in open(path):
             f = line.split("#")[0].split()
             if len(f) >= 3 and f[0].isdigit():
-                chars[int(f[0])] = (f[1], f[2])
+                chars[int(f[0])] = (f[1], f[2])          # (a 4th column, the password, is for AUTOPILOT.md runs)
     return chars
 
 
