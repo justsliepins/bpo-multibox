@@ -2,7 +2,7 @@
 
 You are a Claude Code session on a fresh Omarchy (Arch + Hyprland) PC. The user is asleep and will
 **not answer anything**. Everything you need is in the user's first message (sudo password,
-account logins and passwords, maybe the game download link) and in this repo. Read **HANDOFF.md**
+account logins and passwords, the security code, maybe the game download link) and in this repo. Read **HANDOFF.md**
 (setup + rules) and **LEVELING.md** (what worked when leveling) completely first; this file only
 adds how to run it all unattended.
 
@@ -18,8 +18,7 @@ adds how to run it all unattended.
   for deaths, errors, level-ups) and check the screens every ~10 minutes. Re-arm monitors when
   they expire. Never just wait idle: something is always either running or being fixed.
 - **Credentials:** only in `~/multibox/accounts.conf` (`chmod 600`, git-ignored): `window login
-  character password`. Never echo them in logs, commits, PROGRESS.md or output. Delete the
-  password column from accounts.conf when the run is finished (Phase 6).
+  character password` (the security code in a comment line `# code: ...` there too). Never echo them in logs, commits, PROGRESS.md or output.
 - **Never commit or push** anything during the run (the repo is public). Local notes only.
 - Never press Escape in a game window. Never solve a captcha (see "Whatever happens").
 - Work only on Hyprland workspace 2; after any command that switches workspaces, switch back to
@@ -44,9 +43,13 @@ adds how to run it all unattended.
 2. Log each window in: login field, **password field** (find it on the login screen by
    screenshot - it is below the login field; the client may keep it filled in after the first
    time), Confirm. Use `mbrelog.login(w)` as the model; extend it locally to type the password.
-3. Create the characters (LEVELING.md section 1): windows 1-4 **Ami**, window 5 a model that can
-   become **Swordsman** (Lance or Carsise). Any free names; write the names into accounts.conf.
-   Enter the game with each.
+   **First login of each account asks for a security code twice** (set it, then confirm it): use
+   the code from the user's message, the same for all five. Later logins may ask for it again
+   before entering the game: type it whenever the client asks.
+3. Create the characters (LEVELING.md section 1): windows 1-4 **Ami**, named after **gods**
+   (Zeus, Odin, Anubis, Thor, ...; if a name is taken add letters/digits, e.g. ZeusX, Odin45);
+   window 5 a **Carsise** (it becomes Swordsman, then Champion), any free name. Write the names into
+   accounts.conf. Enter the game with each.
 4. Party with the **"+" button** (HANDOFF.md section 6). Verify 4 party frames in every window.
 5. Autograb: press **Ctrl+Alt+A** once in each window and check the chat for a confirmation;
    if there is none, pick up drops with plain A after kills as a backup.
@@ -87,8 +90,8 @@ Bear farm (HANDOFF.md section 7) and leave `mbbearloop.py` + `mbbuffwatch.py` ru
 
 ## Phase 6 - End of run
 
-Remove passwords from accounts.conf (keep logins and names), write the final state into
-PROGRESS.md, leave the farm running.
+Write the final state into PROGRESS.md and leave the farm running. Keep accounts.conf as it is
+(the user wants the logins kept on this PC); it stays chmod 600 and out of git.
 
 ## Whatever happens
 
