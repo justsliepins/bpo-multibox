@@ -4,7 +4,8 @@ For a new Claude Code session on another Omarchy (Arch + Hyprland) machine. Goal
 start 5 Black Pearl Online (BPO) clients, log in 5 **new** accounts (the user gives you the
 credentials when setup is done), and run the same Great Polar Bear farm as the first PC.
 
-Read `README.md` for how the multibox itself works. This file is the setup and the hard-won rules.
+Read `README.md` for how the multibox itself works. This file is the setup and the hard-won rules;
+`LEVELING.md` is how to take fresh characters from Lv1 to the 2nd class.
 
 ## Rules (from the user, non-negotiable)
 
