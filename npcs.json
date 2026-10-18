@@ -1,0 +1,2024 @@
+[
+ {
+  "name": "Argent Teleporter - Jovial",
+  "area": "\\rgent City",
+  "x": 2187,
+  "y": 217
+ },
+ {
+  "name": "Argent Secretary - Salvier",
+  "area": "Argent City",
+  "x": 2219,
+  "y": 2144
+ },
+ {
+  "name": "Blacksmith - Goldie",
+  "area": "\\rgent City",
+  "x": 2193,
+  "y": 2704
+ },
+ {
+  "name": "Castle Guard - Peter",
+  "area": "Argent City",
+  "x": 2192,
+  "y": 276
+ },
+ {
+  "name": "Citizen - Margaret",
+  "area": "Argent City",
+  "x": 2279,
+  "y": 2744
+ },
+ {
+  "name": "Little Daniel",
+  "area": "Argent City",
+  "x": 2193,
+  "y": 2730
+ },
+ {
+  "name": "Trader - Chiroro",
+  "area": "Argent City",
+  "x": 2331,
+  "y": 232
+ },
+ {
+  "name": "Physican - Ditto",
+  "area": "Argent City",
+  "x": 2250,
+  "y": 2770
+ },
+ {
+  "name": "Banker - Monica",
+  "area": "Argent City",
+  "x": 2220,
+  "y": 2704
+ },
+ {
+  "name": "Forbei",
+  "area": "Argent City",
+  "x": 2226,
+  "y": 2724
+ },
+ {
+  "name": "Sailor - Coddy",
+  "area": "Argent City",
+  "x": 2219,
+  "y": 2918
+ },
+ {
+  "name": "General - William",
+  "area": "\\rgent City",
+  "x": 2277,
+  "y": 2835
+ },
+ {
+  "name": "Hurse - Gina",
+  "area": "Argent City",
+  "x": 2244,
+  "y": 2770
+ },
+ {
+  "name": "Granny Beldi",
+  "area": "Argent City",
+  "x": 2277,
+  "y": 2100
+ },
+ {
+  "name": "Innkeeper - Marriam",
+  "area": "\\rgent City",
+  "x": 2211,
+  "y": 2738
+ },
+ {
+  "name": "Sailor - Coddy",
+  "area": "Argent City",
+  "x": 2219,
+  "y": 291
+ },
+ {
+  "name": "General - William",
+  "area": "\\rgent City",
+  "x": 2277,
+  "y": 2330
+ },
+ {
+  "name": "Shaitan Ambassador - Xiba",
+  "area": "Argent City",
+  "x": 2256,
+  "y": 2704
+ },
+ {
+  "name": "Argent Chairman - Ronnie",
+  "area": "Argent City",
+  "x": 2241,
+  "y": 2743
+ },
+ {
+  "name": "0ldman - Blurry",
+  "area": "\\rgent City",
+  "x": 2272,
+  "y": 2700
+ },
+ {
+  "name": "Grocery - Jimberry",
+  "area": "Argent City",
+  "x": 2232,
+  "y": 2723
+ },
+ {
+  "name": "Tailor - Granny Nila",
+  "area": "\\rgent City",
+  "x": 2267,
+  "y": 2704
+ },
+ {
+  "name": "Innkeeper - Marriam",
+  "area": "\\rgent City",
+  "x": 2211,
+  "y": 2130
+ },
+ {
+  "name": "Forbei",
+  "area": "Argent City",
+  "x": 2226,
+  "y": 2124
+ },
+ {
+  "name": "General - William",
+  "area": "\\rgent City",
+  "x": 2277,
+  "y": 2334
+ },
+ {
+  "name": "Argent Chairman - Ronnie",
+  "area": "Argent City",
+  "x": 2241,
+  "y": 2748
+ },
+ {
+  "name": "0ldman - Blurry",
+  "area": "\\rgent City",
+  "x": 2272,
+  "y": 2100
+ },
+ {
+  "name": "Grocery - Jimberry",
+  "area": "Argent City",
+  "x": 2232,
+  "y": 2728
+ },
+ {
+  "name": "Assistant - Rouri",
+  "area": "Argent City",
+  "x": 2240,
+  "y": 2753
+ },
+ {
+  "name": "Newbie Guide - Senna",
+  "area": "Argent City",
+  "x": 2223,
+  "y": 2738
+ },
+ {
+  "name": "Barmaid - Donna",
+  "area": "Argent City",
+  "x": 2224,
+  "y": 2551
+ },
+ {
+  "name": "Tourist - Ja",
+  "area": "Argent City",
+  "x": 2215,
+  "y": 2524
+ },
+ {
+  "name": "Drunkyard - Anthony",
+  "area": "\\rgent City",
+  "x": 2222,
+  "y": 2533
+ },
+ {
+  "name": "0ldman - Blurry",
+  "area": "\\rgent City",
+  "x": 2272,
+  "y": 200
+ },
+ {
+  "name": "Grocery - Jimberry",
+  "area": "Argent City",
+  "x": 2232,
+  "y": 2124
+ },
+ {
+  "name": "Assistant - Rouri",
+  "area": "Argent City",
+  "x": 2240,
+  "y": 2758
+ },
+ {
+  "name": "Newbie Guide - Senna",
+  "area": "Argent City",
+  "x": 2223,
+  "y": 2733
+ },
+ {
+  "name": "Barmaid - Donna",
+  "area": "Argent City",
+  "x": 2224,
+  "y": 233
+ },
+ {
+  "name": "Tourist - Ja",
+  "area": "Argent City",
+  "x": 2215,
+  "y": 2328
+ },
+ {
+  "name": "Drunkyard - Anthony",
+  "area": "\\rgent City",
+  "x": 2222,
+  "y": 2538
+ },
+ {
+  "name": "Youth - Tommy",
+  "area": "Belmont Plains",
+  "x": 1962,
+  "y": 2634
+ },
+ {
+  "name": "Manufacturer - Desmond",
+  "area": "Belmont Plains",
+  "x": 1732,
+  "y": 2758
+ },
+ {
+  "name": "EDITION - SMUGGLING BUNNY",
+  "area": "Belmont Plains",
+  "x": 2298,
+  "y": 2520
+ },
+ {
+  "name": "Navy Commander - Dessaro",
+  "area": "Thundoria Castle",
+  "x": 713,
+  "y": 1416
+ },
+ {
+  "name": "Assistant - Rouri",
+  "area": "Argent City",
+  "x": 2240,
+  "y": 2750
+ },
+ {
+  "name": "Newbie Guide - Senna",
+  "area": "Argent City",
+  "x": 2223,
+  "y": 2139
+ },
+ {
+  "name": "Tourist - Ja",
+  "area": "Argent City",
+  "x": 2215,
+  "y": 2324
+ },
+ {
+  "name": "Youth - Tommy",
+  "area": "Belmont Plains",
+  "x": 1962,
+  "y": 2694
+ },
+ {
+  "name": "Manufacturer - Desmond",
+  "area": "Belmont Plains",
+  "x": 1732,
+  "y": 2730
+ },
+ {
+  "name": "EDITION - SMUGGLING BUNNY",
+  "area": "Belmont Plains",
+  "x": 2293,
+  "y": 2520
+ },
+ {
+  "name": "Bar Waitress - Mona",
+  "area": "Thundoria Harbor",
+  "x": 990,
+  "y": 1263
+ },
+ {
+  "name": "Sailor - Dio",
+  "area": "Thundoria Harbor",
+  "x": 1083,
+  "y": 1253
+ },
+ {
+  "name": "Trader - Sanjay",
+  "area": "Thundoria Harbor",
+  "x": 1003,
+  "y": 1304
+ },
+ {
+  "name": "Doctor - Masa",
+  "area": "Thundoria Castle",
+  "x": 173,
+  "y": 1549
+ },
+ {
+  "name": "Banker - Macurdo",
+  "area": "Thundoria Castle",
+  "x": 743,
+  "y": 1534
+ },
+ {
+  "name": "Blacksmith - Furlington",
+  "area": "Thundoria Castle",
+  "x": 766,
+  "y": 1447
+ },
+ {
+  "name": "Youth - Tommy",
+  "area": "Belmont Plains",
+  "x": 1962,
+  "y": 2698
+ },
+ {
+  "name": "Manufacturer - Desmond",
+  "area": "Belmont Plains",
+  "x": 1732,
+  "y": 2733
+ },
+ {
+  "name": "Bar Waitress - Mona",
+  "area": "Thundoria Harbor",
+  "x": 290,
+  "y": 1263
+ },
+ {
+  "name": "Sailor - Dio",
+  "area": "Thundoria Harbor",
+  "x": 1083,
+  "y": 1259
+ },
+ {
+  "name": "Girl - Cindy",
+  "area": "Thundoria Castle",
+  "x": 740,
+  "y": 1451
+ },
+ {
+  "name": "Shaitan Ambassador - Alix",
+  "area": "Thundoria Castle",
+  "x": 112,
+  "y": 1505
+ },
+ {
+  "name": "Tools - Wesley",
+  "area": "Thundoria Castle",
+  "x": 141,
+  "y": 1563
+ },
+ {
+  "name": "Tailor - Ditter",
+  "area": "Thundoria Castle",
+  "x": 154,
+  "y": 1512
+ },
+ {
+  "name": "Sailor - Dio",
+  "area": "Thundoria Harbor",
+  "x": 1083,
+  "y": 1230
+ },
+ {
+  "name": "Girl - Cindy",
+  "area": "Thundoria Castle",
+  "x": 140,
+  "y": 1451
+ },
+ {
+  "name": "Shaitan Ambassador - Alix",
+  "area": "Thundoria Castle",
+  "x": 112,
+  "y": 1503
+ },
+ {
+  "name": "Innkeeper - Granny Maya",
+  "area": "Thundoria Castle",
+  "x": 697,
+  "y": 1542
+ },
+ {
+  "name": "Argent Ambassador - Yata",
+  "area": "Thundoria Castle",
+  "x": 141,
+  "y": 1553
+ },
+ {
+  "name": "Guard Captain - Mallack",
+  "area": "Thundoria Castle",
+  "x": 706,
+  "y": 1465
+ },
+ {
+  "name": "Grocer - Kudu",
+  "area": "Thundoria Castle",
+  "x": 125,
+  "y": 1551
+ },
+ {
+  "name": "Thundoria Teleporter - Sarah",
+  "area": "Thundoria Castle",
+  "x": 743,
+  "y": 1556
+ },
+ {
+  "name": "Girl - Rioli",
+  "area": "Thundoria Harbor",
+  "x": 1020,
+  "y": 1273
+ },
+ {
+  "name": "Tools - Wesley",
+  "area": "Thundoria Castle",
+  "x": 741,
+  "y": 1563
+ },
+ {
+  "name": "Guard Captain - Mallack",
+  "area": "Thundoria Castle",
+  "x": 106,
+  "y": 1465
+ },
+ {
+  "name": "Thundoria Teleporter - Sarah",
+  "area": "Thundoria Castle",
+  "x": 743,
+  "y": 1536
+ },
+ {
+  "name": "Navy HQ - General Ken",
+  "area": "Thundoria Castle",
+  "x": 308,
+  "y": 1521
+ },
+ {
+  "name": "Navy HQ - Colonel Maxi",
+  "area": "Thundoria Castle",
+  "x": 653,
+  "y": 1505
+ },
+ {
+  "name": "Guard - Nisson",
+  "area": "Thundoria Castle",
+  "x": 111,
+  "y": 1414
+ },
+ {
+  "name": "Guard - Sonny",
+  "area": "Thundoria Castle",
+  "x": 115,
+  "y": 1414
+ },
+ {
+  "name": "Grocer - Kudu",
+  "area": "Thundoria Castle",
+  "x": 725,
+  "y": 1551
+ },
+ {
+  "name": "Thundoria Teleporter - Sarah",
+  "area": "Thundoria Castle",
+  "x": 143,
+  "y": 1536
+ },
+ {
+  "name": "Morpheus - Freya",
+  "area": "Thundoria Castle",
+  "x": 651,
+  "y": 1535
+ },
+ {
+  "name": "Guard - Nisson",
+  "area": "Thundoria Castle",
+  "x": 711,
+  "y": 1414
+ },
+ {
+  "name": "Guard - Sonny",
+  "area": "Thundoria Castle",
+  "x": 715,
+  "y": 1414
+ },
+ {
+  "name": "Tourist - Bey",
+  "area": "Thundoria Castle",
+  "x": 669,
+  "y": 1554
+ },
+ {
+  "name": "Tourist - Barbi",
+  "area": "Sacred Snow Mountais",
+  "x": 994,
+  "y": 1234
+ },
+ {
+  "name": "Arena Administrator",
+  "area": "Argent City",
+  "x": 2210,
+  "y": 2898
+ },
+ {
+  "name": "Patrol - Marcusa",
+  "area": "Belmont Plains",
+  "x": 2065,
+  "y": 2733
+ },
+ {
+  "name": "Arena Administrator",
+  "area": "Argent City",
+  "x": 2210,
+  "y": 2390
+ },
+ {
+  "name": "Patrol - Marcusa",
+  "area": "Belmont Plains",
+  "x": 2065,
+  "y": 2730
+ },
+ {
+  "name": "Andes Teleporter - 'Wendy",
+  "area": "Andes Forest Haven",
+  "x": 1018,
+  "y": 2973
+ },
+ {
+  "name": "Doctor - Chiveo",
+  "area": "Chaldea Haven",
+  "x": 630,
+  "y": 2091
+ },
+ {
+  "name": "Doctor - Minoseva",
+  "area": "Andes Forest Haven",
+  "x": 1004,
+  "y": 2973
+ },
+ {
+  "name": "Fukei",
+  "area": "Belmont Plains",
+  "x": 2290,
+  "y": 2495
+ },
+ {
+  "name": "Xitron",
+  "area": "Belmont Plains",
+  "x": 1858,
+  "y": 2553
+ },
+ {
+  "name": "Patrol - Marcusa",
+  "area": "Belmont Plains",
+  "x": 2065,
+  "y": 2735
+ },
+ {
+  "name": "Chaldea Teleporter - Mabel",
+  "area": "Chaldea Haven",
+  "x": 625,
+  "y": 2104
+ },
+ {
+  "name": "Andes Teleporter - 'Wendy",
+  "area": "Andes Forest Haven",
+  "x": 1018,
+  "y": 2974
+ },
+ {
+  "name": "Doctor - Minoseva",
+  "area": "Andes Forest Haven",
+  "x": 1004,
+  "y": 297
+ },
+ {
+  "name": "Fukei",
+  "area": "Belmont Plains",
+  "x": 2290,
+  "y": 2499
+ },
+ {
+  "name": "Xitron",
+  "area": "Belmont Plains",
+  "x": 1858,
+  "y": 2539
+ },
+ {
+  "name": "Kentaro",
+  "area": "Abandon Mine Hawven",
+  "x": 1894,
+  "y": 2793
+ },
+ {
+  "name": "Bubu",
+  "area": "Belmont Plains",
+  "x": 1973,
+  "y": 2458
+ },
+ {
+  "name": "Melissa",
+  "area": "Belmont Plains",
+  "x": 1963,
+  "y": 2498
+ },
+ {
+  "name": "Gador",
+  "area": "Rockery Haven",
+  "x": 1507,
+  "y": 3103
+ },
+ {
+  "name": "Little Cuwen",
+  "area": "Belmont Plains",
+  "x": 1635,
+  "y": 2608
+ },
+ {
+  "name": "Andes Teleporter - Wendy",
+  "area": "Andes Forest Haven",
+  "x": 1018,
+  "y": 297
+ },
+ {
+  "name": "Bubu",
+  "area": "Belmont Plains",
+  "x": 1973,
+  "y": 2454
+ },
+ {
+  "name": "Melissa",
+  "area": "Belmont Plains",
+  "x": 1963,
+  "y": 2490
+ },
+ {
+  "name": "Gador",
+  "area": "Rockery Haven",
+  "x": 1507,
+  "y": 3109
+ },
+ {
+  "name": "Little Cuwen",
+  "area": "Belmont Plains",
+  "x": 1635,
+  "y": 2600
+ },
+ {
+  "name": "Aunt Mary",
+  "area": "Belmont Plains",
+  "x": 2144,
+  "y": 2552
+ },
+ {
+  "name": "Haala",
+  "area": "¥alhalla Haven",
+  "x": 1136,
+  "y": 2773
+ },
+ {
+  "name": "Alexandis",
+  "area": "Rockery Haven",
+  "x": 1526,
+  "y": 3053
+ },
+ {
+  "name": "Cuwen",
+  "area": "Solace Haven",
+  "x": 529,
+  "y": 2455
+ },
+ {
+  "name": "Sailor 3001",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2830
+ },
+ {
+  "name": "Kentaro",
+  "area": "Abandon Mine Hawven",
+  "x": 1894,
+  "y": 2790
+ },
+ {
+  "name": "Bubu",
+  "area": "Belmont Plains",
+  "x": 1973,
+  "y": 2452
+ },
+ {
+  "name": "Aunt Mary",
+  "area": "Belmont Plains",
+  "x": 2144,
+  "y": 2553
+ },
+ {
+  "name": "Haala",
+  "area": "¥alhalla Haven",
+  "x": 1136,
+  "y": 2774
+ },
+ {
+  "name": "Alexandis",
+  "area": "Rockery Haven",
+  "x": 1526,
+  "y": 3038
+ },
+ {
+  "name": "Cuwen",
+  "area": "Solace Haven",
+  "x": 529,
+  "y": 2453
+ },
+ {
+  "name": "Sailor 3002",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2835
+ },
+ {
+  "name": "Sailor 3003",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2533
+ },
+ {
+  "name": "Sailor 3004",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2833
+ },
+ {
+  "name": "Sailor 3005",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2834
+ },
+ {
+  "name": "Sailor 3006",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2530
+ },
+ {
+  "name": "Aunt Mary",
+  "area": "Belmont Plains",
+  "x": 2144,
+  "y": 2550
+ },
+ {
+  "name": "Haala",
+  "area": "¥alhalla Haven",
+  "x": 1136,
+  "y": 2778
+ },
+ {
+  "name": "Alexandis",
+  "area": "Rockery Haven",
+  "x": 1526,
+  "y": 3033
+ },
+ {
+  "name": "Sailor 3002",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2830
+ },
+ {
+  "name": "Sailor 3003",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2833
+ },
+ {
+  "name": "Sailor 3005",
+  "area": "Argent City",
+  "x": 2231,
+  "y": 2334
+ },
+ {
+  "name": "Sailor 3006",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2830
+ },
+ {
+  "name": "Sailor 3007",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2835
+ },
+ {
+  "name": "Sailor 3008",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2533
+ },
+ {
+  "name": "Sailor 3009",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2833
+ },
+ {
+  "name": "Sailor 3010",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2534
+ },
+ {
+  "name": "Squadron 1",
+  "area": "Argent City",
+  "x": 2269,
+  "y": 2522
+ },
+ {
+  "name": "Sailor 3002",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 253
+ },
+ {
+  "name": "Sailor 3003",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2330
+ },
+ {
+  "name": "Sailor 3004",
+  "area": "Argent City",
+  "x": 2231,
+  "y": 2330
+ },
+ {
+  "name": "Sailor 3005",
+  "area": "Argent City",
+  "x": 2281,
+  "y": 2838
+ },
+ {
+  "name": "Sailor 3007",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2530
+ },
+ {
+  "name": "Sailor 3008",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2833
+ },
+ {
+  "name": "Sailor 3009",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2333
+ },
+ {
+  "name": "Sailor 3010",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2334
+ },
+ {
+  "name": "Squadron 1",
+  "area": "Argent City",
+  "x": 2269,
+  "y": 2528
+ },
+ {
+  "name": "Squadron 2",
+  "area": "Argent City",
+  "x": 2269,
+  "y": 2533
+ },
+ {
+  "name": "Squadron 3",
+  "area": "Argent City",
+  "x": 2202,
+  "y": 2523
+ },
+ {
+  "name": "Squadron 4",
+  "area": "Argent City",
+  "x": 2196,
+  "y": 2523
+ },
+ {
+  "name": "The Coral",
+  "area": "Argent City",
+  "x": 2242,
+  "y": 2833
+ },
+ {
+  "name": "The fhale",
+  "area": "Argent City",
+  "x": 2242,
+  "y": 2531
+ },
+ {
+  "name": "Sailor 3007",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2330
+ },
+ {
+  "name": "Sailor 3008",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2333
+ },
+ {
+  "name": "Sailor 3009",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 233
+ },
+ {
+  "name": "Sailor 3010",
+  "area": "Argent City",
+  "x": 2282,
+  "y": 2834
+ },
+ {
+  "name": "Squadron 2",
+  "area": "Argent City",
+  "x": 2269,
+  "y": 2538
+ },
+ {
+  "name": "Squadron 3",
+  "area": "Argent City",
+  "x": 2202,
+  "y": 2524
+ },
+ {
+  "name": "Squadron 4",
+  "area": "Argent City",
+  "x": 2196,
+  "y": 2324
+ },
+ {
+  "name": "The Coral",
+  "area": "Argent City",
+  "x": 2242,
+  "y": 2330
+ },
+ {
+  "name": "The fhale",
+  "area": "Argent City",
+  "x": 2242,
+  "y": 2830
+ },
+ {
+  "name": "Maritime Assistant - Alena",
+  "area": "\\rgent City",
+  "x": 2247,
+  "y": 2854
+ },
+ {
+  "name": "Builder - Sinbad",
+  "area": "Argent City",
+  "x": 2255,
+  "y": 2503
+ },
+ {
+  "name": "Harbor Operator - Shirley",
+  "area": "Argent City",
+  "x": 2243,
+  "y": 2524
+ },
+ {
+  "name": "Durian",
+  "area": "Rockery Haven",
+  "x": 1535,
+  "y": 3078
+ },
+ {
+  "name": "Leyna",
+  "area": "Rockery Haven",
+  "x": 1510,
+  "y": 3053
+ },
+ {
+  "name": "Squadron 2",
+  "area": "Argent City",
+  "x": 2269,
+  "y": 2330
+ },
+ {
+  "name": "Squadron 4",
+  "area": "Argent City",
+  "x": 2196,
+  "y": 2320
+ },
+ {
+  "name": "The Coral",
+  "area": "Argent City",
+  "x": 2242,
+  "y": 2835
+ },
+ {
+  "name": "Maritime Assistant - Alena",
+  "area": "\\rgent City",
+  "x": 2247,
+  "y": 2858
+ },
+ {
+  "name": "Builder - Sinbad",
+  "area": "Argent City",
+  "x": 2255,
+  "y": 2800
+ },
+ {
+  "name": "Harbor Operator - Shirley",
+  "area": "Argent City",
+  "x": 2243,
+  "y": 2324
+ },
+ {
+  "name": "Durian",
+  "area": "Rockery Haven",
+  "x": 1535,
+  "y": 3074
+ },
+ {
+  "name": "Leyna",
+  "area": "Rockery Haven",
+  "x": 1510,
+  "y": 3038
+ },
+ {
+  "name": "Don Pitt",
+  "area": "¥alhalla Haven",
+  "x": 1113,
+  "y": 2778
+ },
+ {
+  "name": "Professor Fenny",
+  "area": "¥alhalla Haven",
+  "x": 1131,
+  "y": 277
+ },
+ {
+  "name": "Guiderius",
+  "area": "¥alhalla Haven",
+  "x": 1123,
+  "y": 2764
+ },
+ {
+  "name": "Haven Teleporter - Felicia",
+  "area": "Rockery Haven",
+  "x": 1519,
+  "y": 3074
+ },
+ {
+  "name": "Haven Teleporter - Elizabeth",
+  "area": "¥alhalla Haven",
+  "x": 1121,
+  "y": 2758
+ },
+ {
+  "name": "Maritime Assistant - Alena",
+  "area": "\\rgent City",
+  "x": 2247,
+  "y": 2350
+ },
+ {
+  "name": "Builder - Sinbad",
+  "area": "Argent City",
+  "x": 2255,
+  "y": 2308
+ },
+ {
+  "name": "Harbor Operator - Shirley",
+  "area": "Argent City",
+  "x": 2243,
+  "y": 2320
+ },
+ {
+  "name": "Durian",
+  "area": "Rockery Haven",
+  "x": 1535,
+  "y": 307
+ },
+ {
+  "name": "Professor Fenny",
+  "area": "¥alhalla Haven",
+  "x": 1131,
+  "y": 2770
+ },
+ {
+  "name": "Haven Teleporter - Elizabeth",
+  "area": "¥alhalla Haven",
+  "x": 1121,
+  "y": 2730
+ },
+ {
+  "name": "Haven Teleporter - Meiva",
+  "area": "Abandon Mine Haven",
+  "x": 1912,
+  "y": 2308
+ },
+ {
+  "name": "Haven Teleporter - Meila",
+  "area": "Solace Haven",
+  "x": 543,
+  "y": 2437
+ },
+ {
+  "name": "Security - Kal",
+  "area": "Abandon Mine Hawven",
+  "x": 1909,
+  "y": 2520
+ },
+ {
+  "name": "Berry",
+  "area": "Abandon Mine Hawven",
+  "x": 1893,
+  "y": 2512
+ },
+ {
+  "name": "Geliya",
+  "area": "Abandon Mine Hawven",
+  "x": 1914,
+  "y": 2308
+ },
+ {
+  "name": "Don Pitt",
+  "area": "¥alhalla Haven",
+  "x": 1113,
+  "y": 217
+ },
+ {
+  "name": "Professor Fenny",
+  "area": "¥alhalla Haven",
+  "x": 1131,
+  "y": 278
+ },
+ {
+  "name": "Haven Teleporter - Meiva",
+  "area": "Abandon Mine Haven",
+  "x": 1912,
+  "y": 2300
+ },
+ {
+  "name": "Security - Kal",
+  "area": "Abandon Mine Hawven",
+  "x": 1909,
+  "y": 2320
+ },
+ {
+  "name": "Berry",
+  "area": "Abandon Mine Hawven",
+  "x": 1893,
+  "y": 2513
+ },
+ {
+  "name": "Geliya",
+  "area": "Abandon Mine Hawven",
+  "x": 1914,
+  "y": 2304
+ },
+ {
+  "name": "Greg",
+  "area": "Abandon Mine Haven",
+  "x": 1883,
+  "y": 2508
+ },
+ {
+  "name": "Linda",
+  "area": "Solace Haven",
+  "x": 515,
+  "y": 2437
+ },
+ {
+  "name": "Dada",
+  "area": "Solace Haven",
+  "x": 588,
+  "y": 2335
+ },
+ {
+  "name": "Gregg",
+  "area": "Solace Haven",
+  "x": 526,
+  "y": 2432
+ },
+ {
+  "name": "Harbor Operator - Lufan",
+  "area": "Zephyr Isle",
+  "x": 3253,
+  "y": 3308
+ },
+ {
+  "name": "Berry",
+  "area": "Abandon Mine Hawven",
+  "x": 1893,
+  "y": 2518
+ },
+ {
+  "name": "Greg",
+  "area": "Abandon Mine Haven",
+  "x": 1883,
+  "y": 2309
+ },
+ {
+  "name": "Dada",
+  "area": "Solace Haven",
+  "x": 538,
+  "y": 2333
+ },
+ {
+  "name": "Harbor Operator - Lufan",
+  "area": "Zephyr Isle",
+  "x": 3253,
+  "y": 3304
+ },
+ {
+  "name": "Harbor Operator - Lucci",
+  "area": "Glacier Isle",
+  "x": 2299,
+  "y": 1122
+ },
+ {
+  "name": "Harbor Operator - Whitney",
+  "area": "Outlaw Isle",
+  "x": 3620,
+  "y": 743
+ },
+ {
+  "name": "Harbor Operator - Daruka",
+  "area": "Sara Haven",
+  "x": 3097,
+  "y": 3530
+ },
+ {
+  "name": "Harbor Operator - Whitcombe",
+  "area": "Albania Haven",
+  "x": 1497,
+  "y": 1700
+ },
+ {
+  "name": "Harbor Operator - Noel",
+  "area": "Hafta Haven",
+  "x": 2041,
+  "y": 1353
+ },
+ {
+  "name": "Greg",
+  "area": "Abandon Mine Haven",
+  "x": 1883,
+  "y": 2300
+ },
+ {
+  "name": "Dada",
+  "area": "Solace Haven",
+  "x": 538,
+  "y": 2355
+ },
+ {
+  "name": "Harbor Operator - Lufan",
+  "area": "Zephyr Isle",
+  "x": 3253,
+  "y": 3305
+ },
+ {
+  "name": "Harbor Operator - Lucci",
+  "area": "Glacier Isle",
+  "x": 2299,
+  "y": 1128
+ },
+ {
+  "name": "Harbor Operator - Whitney",
+  "area": "Outlaw Isle",
+  "x": 3620,
+  "y": 7430
+ },
+ {
+  "name": "Harbor Operator - Whitcombe",
+  "area": "Albania Haven",
+  "x": 1497,
+  "y": 1707
+ },
+ {
+  "name": "Harbor Operator - Noel",
+  "area": "Hafta Haven",
+  "x": 2041,
+  "y": 1359
+ },
+ {
+  "name": "Harbor Operator - Fardell",
+  "area": "Reagen Haven",
+  "x": 3153,
+  "y": 6740
+ },
+ {
+  "name": "Trader - Burgess",
+  "area": "Zephyr Isle",
+  "x": 3254,
+  "y": 3273
+ },
+ {
+  "name": "Trader - Sacenis",
+  "area": "Glacier Isle",
+  "x": 2279,
+  "y": 1112
+ },
+ {
+  "name": "Trader - Dilady",
+  "area": "Outlaw Isle",
+  "x": 3595,
+  "y": 739
+ },
+ {
+  "name": "Harbor Operator - Lt. Wayme",
+  "area": "Thundoria Harbor",
+  "x": 1056,
+  "y": 1315
+ },
+ {
+  "name": "Harbor Operator - Lucci",
+  "area": "Glacier Isle",
+  "x": 2299,
+  "y": 1120
+ },
+ {
+  "name": "Harbor Operator - Whitney",
+  "area": "Outlaw Isle",
+  "x": 3620,
+  "y": 438
+ },
+ {
+  "name": "Harbor Operator - Whitcombe",
+  "area": "Albania Haven",
+  "x": 1497,
+  "y": 170
+ },
+ {
+  "name": "Trader - Burgess",
+  "area": "Zephyr Isle",
+  "x": 3254,
+  "y": 3274
+ },
+ {
+  "name": "Trader - Sacenis",
+  "area": "Glacier Isle",
+  "x": 2279,
+  "y": 1110
+ },
+ {
+  "name": "Trader - Dilady",
+  "area": "Outlaw Isle",
+  "x": 3595,
+  "y": 390
+ },
+ {
+  "name": "Harbor Operator - Lt. Wayme",
+  "area": "Thundoria Harbor",
+  "x": 1056,
+  "y": 1314
+ },
+ {
+  "name": "Builder - Attan",
+  "area": "Thundoria Harbor",
+  "x": 1062,
+  "y": 1294
+ },
+ {
+  "name": "Pirate Informer - Gewas",
+  "area": "Argent City",
+  "x": 2224,
+  "y": 2553
+ },
+ {
+  "name": "Navy Informer - Dalongdan",
+  "area": "Argent City",
+  "x": 2201,
+  "y": 2513
+ },
+ {
+  "name": "Navy Recruitment - Rachel",
+  "area": "\\rgent City",
+  "x": 2194,
+  "y": 2774
+ },
+ {
+  "name": "Freight - Huradar",
+  "area": "Abandon Mine Haven",
+  "x": 1907,
+  "y": 2793
+ },
+ {
+  "name": "Harbor Operator - Fardell",
+  "area": "Reagen Haven",
+  "x": 3153,
+  "y": 674
+ },
+ {
+  "name": "Trader - Burgess",
+  "area": "Zephyr Isle",
+  "x": 3254,
+  "y": 3278
+ },
+ {
+  "name": "Trader - Sacenis",
+  "area": "Glacier Isle",
+  "x": 2279,
+  "y": 1113
+ },
+ {
+  "name": "Builder - Attan",
+  "area": "Thundoria Harbor",
+  "x": 1062,
+  "y": 1290
+ },
+ {
+  "name": "Pirate Informer - Gewas",
+  "area": "Argent City",
+  "x": 2224,
+  "y": 2330
+ },
+ {
+  "name": "Navy Informer - Dalongdan",
+  "area": "Argent City",
+  "x": 2201,
+  "y": 231
+ },
+ {
+  "name": "Navy Recruitment - Rachel",
+  "area": "\\rgent City",
+  "x": 2194,
+  "y": 2770
+ },
+ {
+  "name": "Freights - Fernando",
+  "area": "Thundoria Harbor",
+  "x": 1038,
+  "y": 1254
+ },
+ {
+  "name": "Freight - Moken",
+  "area": "Rockery Haven",
+  "x": 1522,
+  "y": 3095
+ },
+ {
+  "name": "Island Teleporter - Silvius",
+  "area": "\\rgent City",
+  "x": 2248,
+  "y": 2853
+ },
+ {
+  "name": "Island Teleporter - Andrea",
+  "area": "Zephyr Isle",
+  "x": 3266,
+  "y": 3264
+ },
+ {
+  "name": "Island Teleporter - Arsene",
+  "area": "Glacier Isle",
+  "x": 2272,
+  "y": 1114
+ },
+ {
+  "name": "Navy Recruitment - Rachel",
+  "area": "\\rgent City",
+  "x": 2194,
+  "y": 277
+ },
+ {
+  "name": "Freight - Huradar",
+  "area": "Abandon Mine Haven",
+  "x": 1907,
+  "y": 2790
+ },
+ {
+  "name": "Freights - Fernando",
+  "area": "Thundoria Harbor",
+  "x": 1038,
+  "y": 1253
+ },
+ {
+  "name": "Freight - Moken",
+  "area": "Rockery Haven",
+  "x": 1522,
+  "y": 3093
+ },
+ {
+  "name": "Island Teleporter - Silvius",
+  "area": "\\rgent City",
+  "x": 2243,
+  "y": 235
+ },
+ {
+  "name": "Island Teleporter - Shayala",
+  "area": "Outlaw Isle",
+  "x": 3611,
+  "y": 728
+ },
+ {
+  "name": "Tailor - Bebe",
+  "area": "Argent City",
+  "x": 2265,
+  "y": 2704
+ },
+ {
+  "name": "Simon Gilter",
+  "area": "Chaldea Haven",
+  "x": 646,
+  "y": 2055
+ },
+ {
+  "name": "Mori",
+  "area": "Chaldea Haven",
+  "x": 628,
+  "y": 2095
+ },
+ {
+  "name": "Freights - Fernando",
+  "area": "Thundoria Harbor",
+  "x": 1038,
+  "y": 1230
+ },
+ {
+  "name": "Freight - Moken",
+  "area": "Rockery Haven",
+  "x": 1522,
+  "y": 3099
+ },
+ {
+  "name": "Island Teleporter - Shayala",
+  "area": "Outlaw Isle",
+  "x": 3611,
+  "y": 7200
+ },
+ {
+  "name": "Simon Gilter",
+  "area": "Chaldea Haven",
+  "x": 646,
+  "y": 2033
+ },
+ {
+  "name": "Azur Breeze",
+  "area": "Chaldea Haven",
+  "x": 622,
+  "y": 210
+ },
+ {
+  "name": "Carin Livingstone",
+  "area": "Chaldea Haven",
+  "x": 626,
+  "y": 2100
+ },
+ {
+  "name": "Hairstylist - Cartel",
+  "area": "\\rgent City",
+  "x": 2215,
+  "y": 2813
+ },
+ {
+  "name": "Accessory - Pucan",
+  "area": "Abandon Mine Haven",
+  "x": 1889,
+  "y": 2504
+ },
+ {
+  "name": "Accessory - Rikka",
+  "area": "Andes Forest Haven",
+  "x": 296,
+  "y": 2969
+ },
+ {
+  "name": "Accessory - Ferrari",
+  "area": "¥alhalla Haven",
+  "x": 1111,
+  "y": 276
+ },
+ {
+  "name": "Island Teleporter - Shayala",
+  "area": "Outlaw Isle",
+  "x": 3611,
+  "y": 723
+ },
+ {
+  "name": "Hairstylist - Cartel",
+  "area": "\\rgent City",
+  "x": 2215,
+  "y": 2518
+ },
+ {
+  "name": "Accessory - Pucan",
+  "area": "Abandon Mine Haven",
+  "x": 1339,
+  "y": 2304
+ },
+ {
+  "name": "Accessory - Rikka",
+  "area": "Andes Forest Haven",
+  "x": 396,
+  "y": 2969
+ },
+ {
+  "name": "Accessory - Ferrari",
+  "area": "¥alhalla Haven",
+  "x": 1111,
+  "y": 2760
+ },
+ {
+  "name": "Accessory - Wetigo",
+  "area": "Thundoria Castle",
+  "x": 731,
+  "y": 1567
+ },
+ {
+  "name": "Accessory - Aii",
+  "area": "Chaldea Haven",
+  "x": 635,
+  "y": 2091
+ },
+ {
+  "name": "Redemption - Bingo",
+  "area": "Argent City",
+  "x": 2231,
+  "y": 2719
+ },
+ {
+  "name": "Freight - Canari",
+  "area": "Chaldea Tundra",
+  "x": 912,
+  "y": 2000
+ },
+ {
+  "name": "Freight - Soraris",
+  "area": "Belmont Plains",
+  "x": 1879,
+  "y": 2963
+ },
+ {
+  "name": "Hairstylist - Cartel",
+  "area": "Argent City",
+  "x": 2215,
+  "y": 2513
+ },
+ {
+  "name": "Accessory - Ferrari",
+  "area": "¥alhalla Haven",
+  "x": 1111,
+  "y": 2763
+ },
+ {
+  "name": "Accessory - Wetigo",
+  "area": "Thundoria Castle",
+  "x": 131,
+  "y": 1567
+ },
+ {
+  "name": "Accessory - Aii",
+  "area": "Chaldea Haven",
+  "x": 635,
+  "y": 201
+ },
+ {
+  "name": "Cleaner",
+  "area": "Argent City",
+  "x": 2252,
+  "y": 2113
+ },
+ {
+  "name": "Mysterious Granny",
+  "area": "Argent City",
+  "x": 2158,
+  "y": 2794
+ },
+ {
+  "name": "Matchstick",
+  "area": "Belmont Plains",
+  "x": 2064,
+  "y": 2733
+ },
+ {
+  "name": "Matchstick",
+  "area": "Thundoria Castle",
+  "x": 162,
+  "y": 1515
+ },
+ {
+  "name": "Big Furnace",
+  "area": "Thundoria Castle",
+  "x": 159,
+  "y": 1474
+ },
+ {
+  "name": "Accessory - Alil",
+  "area": "Chaldea Haven",
+  "x": 635,
+  "y": 2091
+ },
+ {
+  "name": "Redemption - Bingo",
+  "area": "Argent City",
+  "x": 2231,
+  "y": 2710
+ },
+ {
+  "name": "Cleaner",
+  "area": "Argent City",
+  "x": 2252,
+  "y": 2778
+ },
+ {
+  "name": "Mysterious Granny",
+  "area": "Argent City",
+  "x": 2158,
+  "y": 2790
+ },
+ {
+  "name": "Matchstick",
+  "area": "Belmont Plains",
+  "x": 2064,
+  "y": 273
+ },
+ {
+  "name": "Matchstick",
+  "area": "Thundoria Castle",
+  "x": 762,
+  "y": 1513
+ },
+ {
+  "name": "HWood Processing Merchant",
+  "area": "Argent City",
+  "x": 2261,
+  "y": 2718
+ },
+ {
+  "name": "Furnace Artificer - Mel",
+  "area": "Thundoria Castle",
+  "x": 156,
+  "y": 1473
+ },
+ {
+  "name": "Matchstick Granny",
+  "area": "Belmont Plains",
+  "x": 2064,
+  "y": 2734
+ },
+ {
+  "name": "Matchstick Granny",
+  "area": "Thundoria Castle",
+  "x": 161,
+  "y": 1515
+ },
+ {
+  "name": "Hatred Shrub",
+  "area": "Belmont Plains",
+  "x": 2141,
+  "y": 2704
+ },
+ {
+  "name": "Cleaner",
+  "area": "Argent City",
+  "x": 2252,
+  "y": 217
+ },
+ {
+  "name": "Matchstick",
+  "area": "Thundoria Castle",
+  "x": 162,
+  "y": 1513
+ },
+ {
+  "name": "Big Furnace",
+  "area": "Thundoria Castle",
+  "x": 759,
+  "y": 1474
+ },
+ {
+  "name": "HWood Processing Merchant",
+  "area": "Argent City",
+  "x": 2261,
+  "y": 2719
+ },
+ {
+  "name": "Matchstick Granny",
+  "area": "Belmont Plains",
+  "x": 2084,
+  "y": 273
+ },
+ {
+  "name": "Matchstick Granny",
+  "area": "Thundoria Castle",
+  "x": 761,
+  "y": 1515
+ },
+ {
+  "name": "feird Hat Seller",
+  "area": "Argent City",
+  "x": 2240,
+  "y": 277
+ },
+ {
+  "name": "Jackpot Machine",
+  "area": "Argent City",
+  "x": 2210,
+  "y": 210
+ },
+ {
+  "name": "Alchemy Cauldron",
+  "area": "\\rgent City",
+  "x": 2256,
+  "y": 277
+ },
+ {
+  "name": "Crystal Clash Admin",
+  "area": "\\rgent City",
+  "x": 2293,
+  "y": 2740
+ },
+ {
+  "name": "Portal to Silwver Mine 2",
+  "area": "Silver Mine 1",
+  "x": 1786,
+  "y": 2644
+ },
+ {
+  "name": "HWood Processing Merchant",
+  "area": "Argent City",
+  "x": 2261,
+  "y": 2710
+ },
+ {
+  "name": "Matchstick Granny",
+  "area": "Belmont Plains",
+  "x": 2064,
+  "y": 273
+ },
+ {
+  "name": "feird Hat Seller",
+  "area": "Argent City",
+  "x": 2240,
+  "y": 2770
+ },
+ {
+  "name": "Jackpot Machine",
+  "area": "Argent City",
+  "x": 2210,
+  "y": 2709
+ },
+ {
+  "name": "Alchemy Cauldron",
+  "area": "\\rgent City",
+  "x": 2256,
+  "y": 217
+ },
+ {
+  "name": "Portal to Abandoned Mine 2",
+  "area": "Abandoned Mine 1",
+  "x": 1741,
+  "y": 266
+ },
+ {
+  "name": "Portal to Lone Tower",
+  "area": "Sacred Forest",
+  "x": 268,
+  "y": 1752
+ },
+ {
+  "name": "Hurse - Laura",
+  "area": "Andes Forest Haven",
+  "x": 1018,
+  "y": 2974
+ },
+ {
+  "name": "Hurse - Teresa",
+  "area": "Rockery Haven",
+  "x": 1521,
+  "y": 3073
+ },
+ {
+  "name": "Portal to Abandoned Mine 2",
+  "area": "Abandoned Mine 1",
+  "x": 1741,
+  "y": 2660
+ },
+ {
+  "name": "Nurse - Isabella",
+  "area": "Chaldea Haven",
+  "x": 624,
+  "y": 2107
+ },
+ {
+  "name": "Hurse - Laura",
+  "area": "Andes Forest Haven",
+  "x": 1018,
+  "y": 2973
+ },
+ {
+  "name": "Hurse - Teresa",
+  "area": "Rockery Haven",
+  "x": 1521,
+  "y": 3079
+ },
+ {
+  "name": "Hurse - Lesley",
+  "area": "Abandoned Mine Have",
+  "x": 1914,
+  "y": 2305
+ },
+ {
+  "name": "Hurse - Edith",
+  "area": "Solace Haven",
+  "x": 543,
+  "y": 2434
+ },
+ {
+  "name": "Hurse - Nadia",
+  "area": "Zephyr Isle",
+  "x": 3270,
+  "y": 3264
+ },
+ {
+  "name": "Hurse - Mildred",
+  "area": "Glacier Isle",
+  "x": 2274,
+  "y": 1115
+ },
+ {
+  "name": "Portal to Silwver Mine 2",
+  "area": "Silver Mine 1",
+  "x": 1736,
+  "y": 2644
+ },
+ {
+  "name": "Portal to Abandoned Mine 2",
+  "area": "Abandoned Mine 1",
+  "x": 1741,
+  "y": 2661
+ },
+ {
+  "name": "Portal to Lone Tower",
+  "area": "Sacred Forest",
+  "x": 263,
+  "y": 1752
+ },
+ {
+  "name": "Hurse - Karen",
+  "area": "¥alhalla Haven",
+  "x": 1118,
+  "y": 2738
+ },
+ {
+  "name": "Hurse - Lesley",
+  "area": "Abandoned Mine Have",
+  "x": 1914,
+  "y": 2303
+ },
+ {
+  "name": "Hurse - Mildred",
+  "area": "Glacier Isle",
+  "x": 2274,
+  "y": 1113
+ },
+ {
+  "name": "Nurse - Lydia",
+  "area": "Outlaw Isle",
+  "x": 3612,
+  "y": 7300
+ },
+ {
+  "name": "Hurse - Aieda",
+  "area": "Thundoria Castle",
+  "x": 129,
+  "y": 1592
+ },
+ {
+  "name": "Hurse - Mia",
+  "area": "\\rgent City PvP",
+  "x": 2210,
+  "y": 2534
+ },
+ {
+  "name": "VIP Custom Apparels",
+  "area": "\\rgent City",
+  "x": 2247,
+  "y": 2740
+ },
+ {
+  "name": "Portal to Lone Tower",
+  "area": "Sacred Forest",
+  "x": 263,
+  "y": 1732
+ },
+ {
+  "name": "Hurse - Teresa",
+  "area": "Rockery Haven",
+  "x": 1521,
+  "y": 3074
+ }
+]

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Black Pearl Multibox
+Comment=Black Pearl Online in 4 windows with mirrored input
+Exec=@HERE@/multibox-app
+Icon=5E38_Launcher.0
+Categories=Game;
+Keywords=bpo;pirates;tales;top;multibox;multi;
+Terminal=false
+StartupNotify=false

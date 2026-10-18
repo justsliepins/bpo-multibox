@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# mbpause CMD...: run CMD with broadcast paused; the pause ends when CMD ends, however it ends.
+STATE="${XDG_RUNTIME_DIR:-/tmp}/multibox"
+echo 1 >"$STATE/pause.$$"
+sleep 0.25
+"$@"; rc=$?
+rm -f "$STATE/pause.$$"
+exit $rc

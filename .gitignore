@@ -1,0 +1,12 @@
+# Wine prefix clones (reflinks of the real prefix, rebuilt by `multibox start`)
+prefixes/
+# Downloaded DXVK release (see README)
+vendor/
+# Build output
+mbcast
+mbprime
+__pycache__/
+cache/
+hotspots-*.json
+accounts.conf
+gear_done.txt

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Menu entry (Super+Space -> "Black Pearl Multibox"): start the 4-window setup, or, if it is
+# already running, bring window 1 to the front.
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+STATE="${XDG_RUNTIME_DIR:-/tmp}/multibox"
+LOG="${XDG_RUNTIME_DIR:-/tmp}/multibox-launch.log"
+
+note() { notify-send -a multibox -t "${2:-4000}" "Black Pearl Multibox" "$1" 2>/dev/null || true; }
+
+if [[ -f "$STATE/mbcast.pid" ]] && kill -0 "$(cat "$STATE/mbcast.pid")" 2>/dev/null; then
+    addr=$(hyprctl clients -j | python3 -c '
+import json, sys
+for c in json.load(sys.stdin):
+    if c["title"] == "Xwayland on :61": print(c["address"])')
+    [[ -n "$addr" ]] && hyprctl -q dispatch focuswindow "address:$addr"
+    note "Already running."
+    exit 0
+fi
+
+note "Starting the windows… this takes about a minute." 60000
+if "$HERE/multibox" start bpo >"$LOG" 2>&1; then   # count: COUNT in multibox.conf
+    "$HERE/multibox" toggle >>"$LOG" 2>&1   # broadcast OFF, windows spread out: log in each one
+    note "Ready. Broadcast is OFF: log in each window, then click BROADCAST to turn it on." 10000
+else
+    note "Start failed: $(tail -1 "$LOG")" 15000
+fi

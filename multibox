@@ -1,0 +1,1195 @@
+#!/usr/bin/env bash
+# multibox — run N Tales of Pirates clients side by side; whatever you do in one box happens in all of them.
+#
+#   multibox start [local|bpo] [N]   start N boxes (default: profile from multibox.conf, N=4)
+#   multibox stop                    close every box
+#   multibox toggle                  broadcast on/off (also the on-screen button, Super+`, or Pause)
+#                                    ON stacks the boxes on one spot, OFF spreads them out
+#   multibox status                  show what is running
+#   multibox layout                  put the boxes back in their places
+#   multibox camera                  reset the camera in every window (also automatic on broadcast ON)
+#   multibox align                   walk all characters onto the same tile (ALIGN button); again = stop
+#   multibox sit                     sit everyone down / stand up (SIT button)
+#   multibox kill [N]                kill N nearest green-bar mobs, waiting for each to die
+#   multibox kill --f1 [N]           same, but press F1 (skill) before each target click; rests for SP too
+#   multibox safespot                remember window 1's spot as the retreat point on deaths; again = clear
+#   multibox fixate [R]              KILL stays within R tiles (default 100) of window 1's spot; again = off
+#   multibox reload                  reload the broadcaster without closing game clients
+#   multibox fix                     broadcast misbehaving? reset all boxes to the same state (FIX button)
+#   multibox restart N               restart the game in box N only (if it crashed or looks broken)
+#   multibox next                    bring the next box to the front (also Super+Shift+`)
+#   multibox waybar                  status JSON for the waybar indicator (click it to toggle)
+#
+# Each box is its own rootful Xwayland window (:61, :62, ...) with one client inside, so every client
+# stays the focused window of its own X server. mbcast records the box under your mouse (the active
+# Hyprland window) and replays into the others via XTEST. Boxes 2..N use reflink clones of the Wine prefix (instant on btrfs) that share the game folder.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+STATE="${XDG_RUNTIME_DIR:-/tmp}/multibox"
+CONF="$HERE/multibox.conf"
+
+# --- defaults (override in multibox.conf) ------------------------------------------------------
+PROFILE=local
+COUNT=4
+BASE_DISPLAY=61
+# the external screen when it is plugged in, else the laptop's own (the user travels with the laptop)
+MONITOR=$(hyprctl monitors -j 2>/dev/null | python3 -c '
+import json, sys
+ms = [m["name"] for m in json.load(sys.stdin)]
+print("HDMI-A-1" if "HDMI-A-1" in ms else (ms[0] if ms else "HDMI-A-1"))' 2>/dev/null || echo HDMI-A-1)
+# Layout while broadcast is ON / OFF. "stack": every box on the same spot (you see one window, the
+# others are right behind it). "grid": spread out over MONITOR, overlapping where they don't fit,
+# so you can click each box and set it up on its own.
+BOX_WS=2                # the game boxes' workspace
+LAYOUT_ON=stack
+LAYOUT_OFF=grid
+# Which box drives the others while broadcast is ON: 1 = always box 1 (it is also put in front when
+# broadcast turns on), any = whichever box you are using.
+LEADER=1
+# Aimed clicks for ordinary mouse input (mbaim.py). KILL requests visual aiming for its click only.
+AIM=0
+# KILL with a count: sit and rest when anyone's HP is below this after a fight (0 = never).
+REST_BELOW=0.5
+# KILL --f1: seconds to wait after the skill click (the F1 skill's cast time/cooldown).
+F1_COOLDOWN=${F1_COOLDOWN:-0.3}   # F1 is pressed right at the click now
+# KILL: how long to keep looking for a monster before stopping (respawns), seconds.
+NO_MOB_WAIT=${NO_MOB_WAIT:-60}
+# KILL skips monsters whose name is green (far below your level: little or no EXP). 0 = attack them too.
+SKIP_GREEN=1
+# KILL attacks monsters whose name is yellow/orange/red (above your level) too. 0 = white and green only.
+ATTACK_HIGHER=1
+# Room for the (invisible) Wine window frame around the game. Wine shrinks a window that doesn't fit
+# the screen, and the client centres its frame, so the game sits at the same offset in every box.
+# Frames per second per box (0 = unlimited). All boxes share one GPU, so a cap keeps them smooth.
+# Needs DXVK; profiles that can't use DXVK ignore it.
+FPS_LIMIT=${FPS_LIMIT:-30}
+# dxvk (Vulkan, faster) or wined3d (Wine's OpenGL translation). Only affects multibox's own prefixes.
+RENDERER=${RENDERER:-dxvk}
+PAD_W=16
+PAD_H=48
+# Hyprland hotkey that toggles broadcast from anywhere (Hyprland eats it, the game never sees it).
+# Pause inside a box works too, but many laptop keyboards have no Pause key.
+TOGGLE_BIND="SUPER, grave"
+# Bring the next box to the front (to fix up one client while broadcast is off).
+NEXT_BIND="SUPER SHIFT, grave"
+[[ -f "$CONF" ]] && source "$CONF"
+
+die() { log "ERROR: $*"; exit 1; }   # log prints to a terminal itself
+# Every message goes to the activity log (shown in the on-screen panel, mblog.py); on a terminal
+# it's printed too. KILL redirects stderr into the same file, so it doesn't print it twice there.
+log() {
+    [[ -d "$STATE" ]] && printf '%s %s\n' "$(date +%T)" "$*" >>"$STATE/kill.log" 2>/dev/null
+    [[ -t 2 ]] && echo "multibox: $*" >&2
+    return 0
+}
+
+# --- profiles ------------------------------------------------------------------------------------
+# Each profile sets: SRC_PREFIX, GAME_REL (game dir inside the prefix to share, or empty),
+# GAME_DIR (cwd for the client), INI (client user/system.ini), and defines run_client.
+profile_local() {
+    SRC_PREFIX="$HOME/topclient-prefix"
+    DXVK_ARCH=""    # 32-bit D3D8 client on the pinned wine 9.22: left on wined3d
+    GAME_REL=""
+    # shellcheck disable=SC1091
+    source "$HOME/deploy/top-s00/client-env.sh"   # sets WINELOADER, CLIENT_DIR, pinned wine 9.22
+    GAME_DIR="$CLIENT_DIR"
+    INI="$GAME_DIR/user/system.ini"
+    run_client() {
+        export LD_LIBRARY_PATH="$HOME/topclient-libs/usr/lib32:${LD_LIBRARY_PATH:-}"
+        export WINEDLLOVERRIDES="d3dcompiler_43,d3dx9_43=n"
+        cd "$GAME_DIR" && exec "$WINELOADER" 'system\Game.exe' pKcfT0PcaXCaLua.dll
+    }
+}
+
+profile_bpo() {
+    SRC_PREFIX="$HOME/Games/BlackPearlOnline/prefix"
+    GAME_REL="drive_c/BlackPearlOnline"
+    GAME_DIR="$SRC_PREFIX/$GAME_REL"
+    INI="$GAME_DIR/user/system.ini"
+    DXVK_ARCH=x64   # system64\Game.exe is a 64-bit D3D9 client
+    run_client() {
+        # Skips the launcher: patch first with ~/Games/BlackPearlOnline/play.sh.
+        cd "$WINEPREFIX/$GAME_REL" && exec wine 'C:\BlackPearlOnline\system64\Game.exe' pKcfT0PcaX
+    }
+}
+
+load_profile() {
+    case "$1" in
+        local) profile_local ;;
+        bpo)   profile_bpo ;;
+        *) die "unknown profile '$1' (local or bpo)" ;;
+    esac
+}
+
+# Game resolution from user/system.ini (indices from Client/src/GlobalVar.h + Main.cpp).
+game_res() {
+    local idx
+    idx=$(sed -n 's/^resolution=\([0-9]*\).*/\1/p' "$INI" 2>/dev/null | head -1)
+    if grep -q '^fullScreen=1' "$INI" 2>/dev/null; then
+        die "$INI has fullScreen=1; set windowed mode in the game options first"
+    fi
+    case "${idx:-0}" in
+        1) echo "1152 648" ;; 2) echo "1280 720" ;; 3) echo "1366 768" ;;
+        4) echo "1600 900" ;; 5) echo "1920 1080" ;; *) echo "800 600" ;;
+    esac
+}
+
+# Every box, box 1 included, gets its own clone, so your normal install is never changed (DXVK etc.).
+prefix_for() {   # box number -> WINEPREFIX
+    echo "$HERE/prefixes/$PROFILE-$1"
+}
+
+# Put DXVK's d3d9.dll into a box prefix. It is only used when WINEDLLOVERRIDES says so (see start_box).
+ensure_dxvk() {
+    local pfx=$1 src="$HERE/vendor/dxvk/$DXVK_ARCH/d3d9.dll" dst="$1/drive_c/windows/system32/d3d9.dll"
+    [[ -f "$src" ]] || die "DXVK missing: $src (see README)"
+    cmp -s "$src" "$dst" 2>/dev/null || cp "$src" "$dst"
+}
+
+# Clone the source prefix with reflinks; the game folder itself is a symlink so patches apply to all.
+ensure_prefix() {
+    local dst=$1
+    [[ -d "$dst" ]] && return
+    log "cloning prefix -> $dst"
+    mkdir -p "$dst"
+    if [[ -z "$GAME_REL" ]]; then
+        cp -a --reflink=auto "$SRC_PREFIX/." "$dst/"
+    else
+        local parent="${GAME_REL%/*}" name="${GAME_REL##*/}"
+        (cd "$SRC_PREFIX" && find . -mindepth 1 -maxdepth 1) | while read -r e; do
+            [[ "$e" == "./${GAME_REL%%/*}" ]] && continue
+            cp -a --reflink=auto "$SRC_PREFIX/$e" "$dst/"
+        done
+        mkdir -p "$dst/$parent"
+        (cd "$SRC_PREFIX/$parent" && find . -mindepth 1 -maxdepth 1) | while read -r e; do
+            [[ "$e" == "./$name" ]] && continue
+            cp -a --reflink=auto "$SRC_PREFIX/$parent/$e" "$dst/$parent/"
+        done
+        ln -s "$SRC_PREFIX/$GAME_REL" "$dst/$GAME_REL"
+    fi
+}
+
+monitor_geom() {   # -> "x y w h" (logical) for MONITOR
+    hyprctl monitors -j | python3 -c '
+import json, sys
+for m in json.load(sys.stdin):
+    if m["name"] == sys.argv[1]:
+        s = m["scale"]
+        print(m["x"], m["y"], round(m["width"] / s), round(m["height"] / s)); break
+else:
+    sys.exit(1)' "$MONITOR" || die "monitor $MONITOR not found (see: hyprctl monitors)"
+}
+
+monitor_scale() { hyprctl monitors -j | python3 -c '
+import json, sys
+print(next((m["scale"] for m in json.load(sys.stdin) if m["name"] == sys.argv[1]), 1))' "$MONITOR"; }
+
+# A box's window size on MONITOR (logical units). On a scaled screen (the laptop's own, 1.5) the
+# box runs Xwayland -hidpi at size/scale: its X screen keeps the game's pixel size, drawn 1:1
+# (at scale 1 it was drawn 1.5x and didn't fit the laptop screen, 2026-10-14)
+box_logical() {   # bw bh -> "lw lh"
+    python3 -c 'import sys; s = float(sys.argv[3]); print(round(int(sys.argv[1]) / s), round(int(sys.argv[2]) / s))' "$1" "$2" "$(monitor_scale)"
+}
+
+# Default layout: a grid on MONITOR; boxes overlap when they don't fit.
+box_pos() {   # i w h mode -> "x y" relative to MONITOR
+    local i=$1 w=$2 h=$3 mode=$4 mx my mw mh
+    read -r mx my mw mh < <(monitor_geom)
+    if [[ "$mode" == stack ]]; then
+        echo "$(( (mw - w) / 2 > 0 ? (mw - w) / 2 : 0 )) $(( (mh - h) / 2 > 30 ? (mh - h) / 2 : 30 ))"
+        return
+    fi
+    local cols rows c r sx sy
+    cols=$(( COUNT > 1 ? 2 : 1 )); rows=$(( (COUNT + cols - 1) / cols ))
+    c=$(( (i - 1) % cols )); r=$(( (i - 1) / cols ))
+    sx=$(( cols > 1 ? (mw - w) / (cols - 1) : 0 )); (( sx > w )) && sx=$w; (( sx < 0 )) && sx=0
+    sy=$(( rows > 1 ? (mh - h - 30) / (rows - 1) : 0 )); (( sy > h )) && sy=$h; (( sy < 0 )) && sy=0
+    echo "$(( c * sx )) $(( 30 + r * sy ))"
+}
+
+xw_addr() { hyprctl clients -j | python3 -c '
+import json, sys
+for c in json.load(sys.stdin):
+    if c["title"] == "Xwayland on :" + sys.argv[1]: print(c["address"]); break' "$1"; }
+
+wait_for() {   # seconds cmd...
+    local t=$(( $1 * 10 )); shift
+    while (( t-- > 0 )); do "$@" >/dev/null 2>&1 && return 0; sleep 0.1; done
+    return 1
+}
+
+# Largest titled window on a display (the game window). Wine's helper windows have no title,
+# and the client's "Loading..." splash comes up first.
+game_window() {
+    local d=$1 best="" area=0 w name WIDTH HEIGHT X Y SCREEN WINDOW
+    for w in $(DISPLAY=$d xdotool search --onlyvisible --name '' 2>/dev/null); do
+        name=$(DISPLAY=$d xdotool getwindowname "$w" 2>/dev/null) || continue
+        [[ -z "${name// /}" || "$name" == Loading* ]] && continue
+        eval "$(DISPLAY=$d xdotool getwindowgeometry --shell "$w" 2>/dev/null)" || continue
+        if (( WIDTH * HEIGHT > area && WIDTH >= 640 )); then area=$(( WIDTH * HEIGHT )); best=$w; fi
+    done
+    [[ -n "$best" ]] && echo "$best"
+}
+
+start_box() {
+    local i=$1 gw=$2 gh=$3 d=$(( BASE_DISPLAY + i - 1 )) x y
+    [[ -e "/tmp/.X11-unix/X$d" ]] && die "display :$d is already in use (multibox stop?)"
+    local bw=$(( gw + PAD_W )) bh=$(( gh + PAD_H )) lw lh hidpi=""
+    read -r lw lh < <(box_logical "$bw" "$bh")
+    (( lw != bw )) && hidpi="-hidpi -geometry ${lw}x${lh}"
+    read -r x y < <(box_pos "$i" "$lw" "$lh" "$LAYOUT_ON")
+    # on their own workspace (silent: the user keeps working where they are)
+    hyprctl -q dispatch exec "[float; workspace $BOX_WS silent; monitor $MONITOR; size $lw $lh; move $x $y] Xwayland :$d -nolisten tcp -noreset $hidpi"
+    wait_for 10 test -e "/tmp/.X11-unix/X$d" || die "Xwayland :$d did not start"
+    wait_for 5 xw_addr "$d" || die "Xwayland :$d window not found"
+    launch_client "$i"
+}
+
+# Start (or restart) the game client inside box i's X server.
+launch_client() {
+    local i=$1 d=$(( BASE_DISPLAY + $1 - 1 ))
+    local pfx; pfx=$(prefix_for "$i")
+    ensure_prefix "$pfx"
+    local dxvk=0
+    if [[ "$RENDERER" == dxvk && -n "$DXVK_ARCH" ]]; then ensure_dxvk "$pfx"; dxvk=1; fi
+    log "box $i: :$d, prefix $pfx, $([[ $dxvk == 1 ]] && echo "DXVK, ${FPS_LIMIT} fps cap" || echo wined3d)"
+    "$HERE/mbprime" ":$d" || true   # so Wine finds relative mouse axes (see mbprime.c)
+    (
+        export WINEPREFIX="$pfx" DISPLAY=":$d" WINEDEBUG="${MB_WINEDEBUG:--all}"
+        unset WAYLAND_DISPLAY   # force winex11 into the nested server
+        if (( dxvk )); then
+            export WINEDLLOVERRIDES="d3d9=n,b${WINEDLLOVERRIDES:+;$WINEDLLOVERRIDES}"
+            export DXVK_LOG_LEVEL=none DXVK_HUD="${MB_DXVK_HUD:-}"
+            (( FPS_LIMIT > 0 )) && export DXVK_CONFIG="d3d9.maxFrameRate = $FPS_LIMIT"
+        fi
+        run_client
+    ) >"$STATE/box$i.log" 2>&1 &
+    echo $! >"$STATE/box$i.pid"
+    echo "$pfx" >"$STATE/box$i.prefix"
+}
+
+# Walk every character onto the same tile (mbalign.py). Broadcast is paused meanwhile, so the
+# per-box clicks aren't copied, and restored afterwards.
+# Pause/resume broadcasting while multibox clicks or types into single boxes (ALIGN, FIX, SIT).
+# mbcast counts nested pauses and never changes the ON/OFF state the user chose; every pause taken
+# here is released when this process exits, whatever happens.
+PAUSES=0
+# A pause is the file STATE/pause.<pid of this shell>: mbcast honours it only while this process
+# lives, so a killed command can't leave broadcast paused (signals could).
+mb_pause() {
+    PAUSES=$(( PAUSES + 1 ))
+    echo "$PAUSES" >"$STATE/pause.$$"
+    sleep 0.25
+}
+mb_resume() {
+    (( PAUSES > 0 )) || return 0
+    PAUSES=$(( PAUSES - 1 ))
+    if (( PAUSES == 0 )); then rm -f "$STATE/pause.$$"; sleep 0.15; else echo "$PAUSES" >"$STATE/pause.$$"; fi
+}
+mb_release_all() { while (( PAUSES > 0 )); do mb_resume; done; }
+
+# SIT / STAND (one button): Insert in each window, 1 s apart (mbsit.py explains why).
+cmd_sit() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    exec 6>"$STATE/sit.lock"; flock -n 6 || die "already sitting/standing"
+    local displays=() i mode
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+    mode=sit; [[ "$(cat "$STATE/sit" 2>/dev/null)" == sitting ]] && mode=stand
+    echo "busy" >"$STATE/sit"
+    trap 'mb_release_all; [[ "$(cat "$STATE/sit" 2>/dev/null)" == busy ]] && echo standing >"$STATE/sit"' EXIT
+    mb_pause
+    local result
+    result=$(cd "$HERE" && python3 mbsit.py "$mode" "${displays[@]}" 2>>"$STATE/sit.out" 6>&-) || result=standing
+    echo "$result" >"$STATE/sit"
+    mb_resume
+    log "sit: $(cat "$STATE/sit")"
+}
+
+# CAMERA: press Home (the game's camera reset: default angle and zoom) in every box. ALIGN and the
+# click offsets assume the default camera, so this also runs when broadcast turns ON and before ALIGN.
+press_home() {   # displays...
+    local d
+    for d in "$@"; do
+        DISPLAY=$d xdotool keydown Home sleep 0.12 keyup Home 2>/dev/null || true
+    done
+}
+
+cmd_camera() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    local displays=() i
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+    mb_pause
+    press_home "${displays[@]}"
+    mb_resume
+    log "camera reset in all windows"
+}
+
+cmd_align() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    exec 8>"$STATE/align.lock"
+    if [[ -n "${MB_ALIGN_TOL:-}" ]]; then
+        flock 8             # started by KILL or a recovery: wait for a running ALIGN, never cancel it
+    elif ! flock -n 8; then   # already aligning: this click (button) means stop
+        touch "$STATE/align.cancel"
+        local pg; pg=$(cat "$STATE/align.pid" 2>/dev/null) || pg=""
+        [[ -n "$pg" ]] && kill -- "-$pg" 2>/dev/null   # the whole group, xdotool included
+        log "align: stopping"
+        return 0
+    fi
+    if [[ -z "${MB_IN_FIX:-}" ]] && ! flock -n "$STATE/fix.lock" true; then
+        echo "FIX is running; it aligns at the end" >"$STATE/align"
+        return 0
+    fi
+    rm -f "$STATE/align.cancel" "$STATE/align.pid"
+    echo aligning >"$STATE/align"
+    [[ -n "${MB_IN_FIX:-}" ]] || \
+        trap 'mb_release_all; [[ "$(cat "$STATE/align" 2>/dev/null)" == aligning ]] && echo "interrupted" >"$STATE/align"' EXIT
+    mb_pause
+    local displays=() i msg
+    for (( i = 1; i <= COUNT; i++ )); do
+        # windows out of broadcast (a revived character travelling back) are left alone
+        grep -qx "$(( i - 1 ))" "$STATE/excluded" 2>/dev/null && continue
+        displays+=(":$(( BASE_DISPLAY + i - 1 ))")
+    done
+    press_home "${displays[@]}"   # ALIGN's clicks assume the default camera
+    sleep 1.2                     # the camera glides back
+    # own process group, so STOP can kill a running xdotool click too
+    (cd "$HERE" && exec setsid python3 mbalign.py "${displays[@]}") >"$STATE/align.out" 2>&1 6>&- 7>&- 8>&- &
+    echo $! >"$STATE/align.pid"
+    [[ -f "$STATE/align.cancel" ]] && kill -- "-$!" 2>/dev/null   # STOP pressed while starting
+    wait $! 2>/dev/null || true
+    if [[ -f "$STATE/align.cancel" ]]; then
+        msg="stopped"
+        sleep 0.3
+        for d in "${displays[@]}"; do DISPLAY=$d xdotool mouseup 1 2>/dev/null || true; done   # no stuck button
+    else
+        msg=$(tail -1 "$STATE/align.out" 2>/dev/null) || msg=""
+        [[ -n "$msg" ]] || msg="failed (see $STATE/align.out)"
+    fi
+    mb_resume
+    rm -f "$STATE/align.pid" "$STATE/align.cancel"
+    echo "$msg" >"$STATE/align"
+    log "align: $msg"
+}
+
+# mbtrack.py: reads every box's coordinates a few times a second and writes the click offsets
+# mbcast applies (followers standing a tile or two off still hit the same monster).
+start_tracker() {
+    pkill -f "mbtrack.py $STATE " 2>/dev/null || true
+    (cd "$HERE" && exec python3 mbtrack.py "$STATE" "$@") >"$STATE/track.log" 2>&1 6>&- 7>&- 8>&- &
+}
+
+# mbaim.py: at a click on the game world, finds the clicked monster in each follower's screen.
+start_aim() {
+    pkill -f "mbaim.py $STATE/aim.sock" 2>/dev/null || true
+    (cd "$HERE" && exec python3 mbaim.py "$STATE/aim.sock" "$@") >"$STATE/aim.log" 2>&1 6>&- 7>&- 8>&- &
+}
+
+# The broadcaster. Extra env: MB_START_OFF=1 starts with broadcast off. The game window sits at
+# (8,37) inside a box (Wine's centring, see README); mbcast needs its rect to tell world from UI.
+start_mbcast() {   # displays...
+    local gw gh; read -r gw gh < <(game_res)
+    env MB_AIM="$STATE/aim.sock" MB_AIM_ALL="$AIM" MB_HOOK="$HERE/multibox" MB_OFFSETS="$STATE/offsets" MB_TARGET_STATE="$STATE" MB_GAME_RECT="8,37,$gw,$gh" \
+        "$HERE/mbcast" $([[ "$LEADER" == 1 ]] && echo -1) "$@" >>"$STATE/mbcast.log" 2>&1 6>&- 7>&- 8>&- &
+    echo $! >"$STATE/mbcast.pid"
+}
+
+# SAFESPOT: remember window 1's spot; when anyone dies during KILL, everyone retreats there. Again = clear.
+cmd_safespot() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    if [[ -f "$STATE/safespot" ]]; then rm -f "$STATE/safespot"; log "safespot: cleared"; return; fi
+    local pos
+    pos=$(cd "$HERE" && python3 -c 'import mbcoords,sys; p=mbcoords.read(":'"$BASE_DISPLAY"'"); print(*p) if p else sys.exit(1)') \
+        || die "can't read window 1's coordinates"
+    echo "$pos" >"$STATE/safespot"
+    log "safespot: $pos"
+}
+
+# FIXATE [radius]: remember window 1's spot (the KILL loop stays within radius tiles); again = release
+cmd_fixate() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    if [[ -f "$STATE/anchor" && -z "${1:-}" ]]; then rm -f "$STATE/anchor"; log "fixate: released"; return; fi
+    local r=${1:-100} pos
+    [[ "$r" =~ ^[0-9]+$ ]] && (( r >= 5 )) || die "radius must be a number >= 5"
+    pos=$(cd "$HERE" && python3 -c 'import mbcoords,sys; p=mbcoords.read(":'"$BASE_DISPLAY"'"); print(*p) if p else sys.exit(1)') \
+        || die "can't read window 1's coordinates"
+    echo "$pos $r" >"$STATE/anchor"
+    log "fixate: home $pos, radius $r"
+}
+
+# GOTO safe|target: everyone walks (Alt+R auto-trace) to the safespot or the FIXATE spot, then
+# aligns. Again while walking = cancel.
+cmd_goto() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    local pidf="$STATE/goto.pid" x y _r displays=() i
+    if [[ -f "$pidf" ]] && kill -0 "$(cat "$pidf")" 2>/dev/null; then
+        kill -TERM "$(cat "$pidf")" 2>/dev/null || true
+        pkill -TERM -f "mbtarget.py goto" 2>/dev/null || true
+        rm -f "$pidf" "$STATE/goto"
+        log "goto: cancelled"
+        return
+    fi
+    case "${1:-}" in
+        safe)   [[ -f "$STATE/safespot" ]] || die "no safespot set (🛡 SAFE)"; read -r x y <"$STATE/safespot" ;;
+        target) [[ -f "$STATE/anchor" ]] || die "no target set (📍 FIXATE)"; read -r x y _r <"$STATE/anchor" ;;
+        *) die "usage: multibox goto safe|target" ;;
+    esac
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+    echo $$ >"$pidf"; echo "$1" >"$STATE/goto"
+    trap "mb_release_all; rm -f '$pidf' '$STATE/goto'" EXIT
+    log "goto: everyone to the $1 ($x,$y)"
+    mb_pause
+    if (cd "$HERE" && MB_STATE="$STATE" python3 mbtarget.py goto "$STATE" "$x" "$y" "${displays[@]}"); then
+        mb_resume
+        MB_ALIGN_TOL=1 "$HERE/multibox" align >/dev/null 2>&1 || true
+        log "goto: arrived at the $1 ($x,$y)"
+    else
+        mb_resume
+        die "goto: $(cat "$STATE/target-status" 2>/dev/null)"
+    fi
+}
+
+# F1 mode: press F1 (the skill slot) in every window with broadcast paused, so the next click on a
+# mob casts that skill (Lightning Bolt / Conch Ray for Voyagers, the taunt for the Champion).
+press_f1_all() {
+    local d
+    mb_pause
+    for d in "$@"; do DISPLAY=$d xdotool keydown F1 sleep 0.1 keyup F1 2>/dev/null || true; done
+    mb_resume
+    sleep 0.15
+}
+
+cmd_target_kill() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    # everything this run prints (log, die, mbtarget errors) goes to a timestamped log file
+    local klog="$STATE/kill.log"
+    [[ -f "$klog" ]] && (( $(wc -l <"$klog") > 5000 )) && tail -n 3000 "$klog" >"$klog.tmp" && mv "$klog.tmp" "$klog"
+    exec 2> >(while IFS= read -r l; do printf '%s %s\n' "$(date +%T)" "$l"; done >>"$klog")
+    log "kill: start $*"
+    export SKIP_GREEN ATTACK_HIGHER
+    rm -f "$STATE/party-map" "$STATE/target-blacklist"   # fresh per run
+    local f1=0
+    if [[ "${1:-}" == --f1 ]]; then f1=1; shift; fi
+    local requested=${1:-1} displays=() i front=0 title idx round status aligned
+    local empty_f1
+    [[ "$requested" =~ ^[0-9]+$ ]] && (( requested >= 0 && requested <= 99 )) || \
+        die "kill count must be 0 (endless) .. 99"
+    local total=$requested; (( requested == 0 )) && total="∞"   # shown as N or ∞
+    echo $$ >"$STATE/kill.pid"
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+    if [[ "$LEADER" != 1 ]]; then
+        # With a movable leader, the overlay does not take keyboard focus, so use the active box.
+        title=$(hyprctl activewindow -j 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("title", ""))' 2>/dev/null || true)
+        if [[ "$title" =~ Xwayland\ on\ :([0-9]+) ]]; then
+            idx=$(( BASH_REMATCH[1] - BASE_DISPLAY + 1 ))
+            (( idx >= 1 && idx <= COUNT )) && front=$(( idx - 1 ))
+        else
+            idx=$(cat "$STATE/front" 2>/dev/null || echo 1)
+            (( idx >= 1 && idx <= COUNT )) && front=$(( idx - 1 ))
+        fi
+    fi
+    if (( f1 )); then
+        empty_f1=$(cd "$HERE" && python3 mbtarget.py f1-empty "${displays[@]}" 2>/dev/null) || empty_f1=""
+        [[ -n "$empty_f1" ]] && log "WARNING: F1 slot is empty in window(s) $empty_f1: no skill will be cast there"
+    fi
+    # a run stopped mid-rest leaves the party seated: seated characters can't attack
+    if [[ "$(cat "$STATE/sit" 2>/dev/null)" == sitting ]]; then
+        log "kill: the party was left sitting; standing up first"
+        "$HERE/multibox" sit >/dev/null 2>&1 || true; sleep 1.5
+    fi
+    # F1 is pressed by mbtarget right before the target click (after the hover checks: a selected
+    # skill replaces the attack cursor with a skill cursor)
+    (( f1 )) && export MB_F1_AT_CLICK=1
+    trap mb_release_all EXIT
+    # start at the FIXATE spot itself (e.g. the group is still at the safespot)
+    if [[ -f "$STATE/anchor" ]]; then
+        log "kill: going to the FIXATE spot first"
+        # one straggler that can't get there must not stop the hunt: start with the others
+        (cd "$HERE" && MB_STATE="$STATE" python3 mbtarget.py return-home "$STATE" --radius=5 "${displays[@]}") ||
+            log "kill: not everyone reached the FIXATE spot ($(cat "$STATE/target-status" 2>/dev/null)); starting anyway"
+        MB_ALIGN_TOL=1 "$HERE/multibox" align >/dev/null 2>&1 || true
+    fi
+    # Unattended: nothing below stops the run except a missing broadcaster or no kill after
+    # several full resets. Every other failure is logged and recovered from (soft).
+    local fails=0 resets=0 misses=0 last_wipe="" threat_now=0 threat_tries=0
+    local sp_arg=-; (( f1 )) && sp_arg=sp
+    target_xy() {
+        if [[ -f "$STATE/anchor" ]]; then read -r tx ty _ <"$STATE/anchor"
+        else read -r tx ty < <(cd "$HERE" && python3 -c "import mbcoords; print(*(mbcoords.read('${displays[$front]}') or (0, 0)))"); fi
+    }
+    safe_align() { MB_ALIGN_TOL=1 "$HERE/multibox" align >/dev/null 2>&1 || true; sleep 0.8; }
+    # everyone to the safespot (the dead revive and rest first), rest, back to the target
+    to_safespot() {
+        local sx sy
+        read -r sx sy <"$STATE/safespot"
+        target_xy
+        mb_pause
+        local ok=0
+        (cd "$HERE" && python3 mbtarget.py group-recover "$STATE" "$front" "$sx" "$sy" "$tx" "$ty" "$sp_arg" "${displays[@]}") || ok=$?
+        mb_resume
+        safe_align
+        return $ok
+    }
+    # Patrol (MB_PATROL="x,y x,y ..."): sparse mobs over a big area. When nothing is in sight, or
+    # a MB_AVOID monster comes close, the next point becomes the target and everyone goes there.
+    local patrol=(${MB_PATROL:-}) patrol_i=0
+    next_spot() {
+        (( ${#patrol[@]} )) || return 1
+        local r=20 px py
+        [[ -f "$STATE/anchor" ]] && read -r _ _ r <"$STATE/anchor"
+        patrol_i=$(( (patrol_i + 1) % ${#patrol[@]} ))
+        IFS=, read -r px py <<<"${patrol[$patrol_i]}"
+        echo "$px $py ${r:-20}" >"$STATE/anchor"
+        log "kill $round/$total: patrol: on to point $(( patrol_i + 1 ))/${#patrol[@]} ($px,$py)"
+        (cd "$HERE" && python3 mbtarget.py clear "$STATE" "${displays[$front]}") >/dev/null 2>&1 || true
+        mb_pause
+        if ! (cd "$HERE" && MB_STATE="$STATE" python3 mbtarget.py goto "$STATE" "$px" "$py" "${displays[@]}"); then
+            # unreachable (water, cliffs): hunt where we are and leave that point out from now on
+            log "kill $round/$total: patrol walk had a problem: $(cat "$STATE/target-status" 2>/dev/null); dropping point $px,$py"
+            local here
+            here=$(cd "$HERE" && python3 -c "import mbcoords; print(*(mbcoords.read('${displays[$front]}') or ()))")
+            [[ -n "$here" ]] && echo "$here ${r:-20}" >"$STATE/anchor"
+            patrol=("${patrol[@]:0:$patrol_i}" "${patrol[@]:$(( patrol_i + 1 ))}")
+            patrol_i=$(( patrol_i - 1 ))
+        fi
+        mb_resume
+        safe_align
+    }
+    # A MB_AVOID monster (too strong) came close: everyone walks to the safespot, waits there
+    # MB_LINGER seconds for it to wander off, and comes back. Without a safespot: FIXATE spot.
+    avoid() {
+        if [[ "$(cat "$STATE/target-status" 2>/dev/null)" == *"out of SP"* && -f "$STATE/safespot" ]]; then
+            log "kill $round/$total: $(cat "$STATE/target-status" 2>/dev/null): to the safespot to rest"
+            to_safespot || soft "retreat had a problem: $(cat "$STATE/target-status" 2>/dev/null)"
+            return
+        fi
+        if (( ${#patrol[@]} )); then
+            log "kill $round/$total: $(cat "$STATE/target-status" 2>/dev/null) (moving on)"
+            next_spot; return
+        fi
+        log "kill $round/$total: $(cat "$STATE/target-status" 2>/dev/null) (to the safespot for ${MB_LINGER:-45}s)"
+        (cd "$HERE" && python3 mbtarget.py clear "$STATE" "${displays[$front]}") >/dev/null 2>&1 || true
+        if [[ -f "$STATE/safespot" ]]; then
+            MB_LINGER=${MB_LINGER:-45} to_safespot || soft "retreat had a problem: $(cat "$STATE/target-status" 2>/dev/null)"
+        else
+            sleep "${MB_LINGER:-45}"
+        fi
+    }
+    soft() {   # a recoverable failure: log it, back off, retry this kill slot
+        fails=$(( fails + 1 ))
+        log "kill $round/$total: $1 (problem $fails in a row; recovering)"
+        round=$(( round - 1 ))
+        (cd "$HERE" && python3 mbtarget.py clear "$STATE" "${displays[$front]}") >/dev/null 2>&1 || true
+        if (( fails >= 6 )); then
+            resets=$(( resets + 1 ))
+            (( resets <= 3 )) || die "kill stopped at $(( round + 1 ))/$total: still failing after 3 full resets"
+            fails=0
+            if [[ -f "$STATE/safespot" ]]; then
+                log "kill $(( round + 1 ))/$total: too many problems in a row; full reset via the safespot ($resets/3)"
+                to_safespot || true
+            else
+                log "kill $(( round + 1 ))/$total: too many problems in a row; back to the FIXATE spot ($resets/3)"
+                (cd "$HERE" && python3 mbtarget.py return-home "$STATE" --radius=5 "${displays[@]}") >/dev/null 2>&1 || true
+                safe_align
+            fi
+        else
+            sleep 2
+        fi
+    }
+    # Captcha alert: a dialog on a client's right side (the game's occasional human check) pauses
+    # KILL, beeps and notifies until it is gone. You solve it; KILL then simply continues.
+    captcha_wait() {
+        local hit w alerted=0 closed f
+        # ordinary popups (Daily Buff, notices, a leftover Death Recap): closed every 5th round
+        # (a sweep costs ~3 s of standing still)
+        if (( round % 5 == 1 )); then
+            closed=$(cd "$HERE" && python3 mbtarget.py popups "$STATE" "${displays[@]}" 2>/dev/null) || true
+            [[ -n "$closed" ]] && log "kill $round/$total: $closed"
+        fi
+        # the captcha watcher (mbcaptchawatch, always on) pauses mirroring with its pause file and
+        # alerts: KILL just waits while that file exists. Without the watcher: the old check.
+        if pgrep -f mbcaptchawatch.py >/dev/null; then
+            for f in "$STATE"/pause.*; do
+                [[ -e "$f" ]] && tr '\0' ' ' <"/proc/${f##*.}/cmdline" 2>/dev/null | grep -q mbcaptchawatch || continue
+                log "kill $round/$total: CAPTCHA open: waiting for you"
+                echo "captcha: waiting for you" >"$STATE/target-status"
+                while [[ -e "$f" ]]; do sleep 2; done
+                log "kill $round/$total: captcha gone; continuing"
+            done
+            return 0
+        fi
+        hit=$(cd "$HERE" && python3 mbtarget.py captcha "$STATE" "${displays[@]}") || return 0
+        read -r w _ <<<"$hit"
+        log "kill $round/$total: CAPTCHA? a dialog is open in window $w (right side); paused until it's closed"
+        echo "captcha:window $w: dialog open, waiting for you" >"$STATE/target-status"
+        while hit=$(cd "$HERE" && python3 mbtarget.py captcha "$STATE" "${displays[@]}"); do
+            read -r w _ <<<"$hit"
+            if (( $(date +%s) - alerted >= 60 )); then
+                notify-send -u critical -a multibox "Black Pearl Multibox" \
+                    "Captcha / dialog in window $w: KILL is paused until you close it" 2>/dev/null || true
+                pw-play /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga >/dev/null 2>&1 &
+                alerted=$(date +%s)
+            fi
+            sleep 2
+        done
+        log "kill $round/$total: dialog closed; continuing"
+    }
+    for (( round = 1; requested == 0 || round <= requested; round++ )); do
+        captcha_wait
+        [[ -f "$STATE/mbcast.pid" ]] && kill -0 "$(cat "$STATE/mbcast.pid")" 2>/dev/null ||
+            die "kill stopped at $round/$total: the broadcaster is not running"
+        if [[ "$(cat "$STATE/broadcast" 2>/dev/null)" != on ]]; then   # you turned it off: wait
+            echo "waiting:$round/$total:broadcast is off; continuing when it's back on" >"$STATE/target-status"
+            log "kill $round/$total: broadcast is off; waiting for it to be turned on"
+            while [[ "$(cat "$STATE/broadcast" 2>/dev/null)" != on ]]; do sleep 2; done
+            log "kill $round/$total: broadcast on again; continuing"
+        fi
+        # one process: wait for any fight to end, FIXATE walk-home, deaths / danger / low HP-SP
+        local deadw w tx ty danger lowflag homed pre
+        sp_arg=-; (( f1 )) && sp_arg=sp
+        if (( threat_now )); then
+            pre="- -1 0 0"; threat_now=0     # a threat showed up mid-fight: straight to it
+        elif ! pre=$(cd "$HERE" && MB_STATE="$STATE" python3 mbtarget.py cycle "$STATE" "$front" "$REST_BELOW" "$sp_arg" \
+                   "$round" "$total" "${displays[@]}"); then
+            soft "round check failed: $(cat "$STATE/target-status" 2>/dev/null)"; continue
+        fi
+        read -r deadw danger lowflag homed <<<"$pre"
+        [[ "$deadw" == - ]] && deadw=""
+        deadw=${deadw//,/ }                   # comma-separated in the cycle output: one field
+        # Wipe guard: the whole party dead twice within 30 minutes means this spot is too strong
+        # for the party. Looping die -> revive -> walk back -> die for hours helps nobody.
+        if [[ -n "$deadw" ]]; then
+            local ndead nlive
+            ndead=$(wc -w <<<"$deadw")
+            nlive=$(( COUNT - $(cat "$STATE/excluded" 2>/dev/null | wc -w || true) ))
+            if (( ndead >= nlive )); then
+                local now; now=$(date +%s)
+                if [[ -n "${last_wipe:-}" ]] && (( now - last_wipe < 1800 )); then
+                    log "kill $round/$total: the whole party died twice within 30 minutes; reviving and resting in town"
+                    mb_pause
+                    (cd "$HERE" && python3 mbtarget.py revive-all "$STATE" "${displays[@]}") || true
+                    mb_resume
+                    die "kill stopped: party wiped twice at this spot. Too strong here: pick another target spot (FIXATE) and safespot"
+                fi
+                last_wipe=$now
+            fi
+        fi
+        (( homed )) && safe_align
+        # Deaths: with a safespot everyone goes there (the dead revive and rest in town first),
+        # rests, and comes back. Without one, a follower recovers in the background (out of
+        # broadcast meanwhile); if window 1 died, KILL waits for it.
+        if [[ -n "$deadw" && -f "$STATE/safespot" ]]; then
+            log "kill $round/$total: window(s) $(for w in $deadw; do printf '%s ' $(( w + 1 )); done)died; everyone to the safespot, rest, back"
+            if ! to_safespot; then soft "safespot trip had a problem: $(cat "$STATE/target-status" 2>/dev/null)"; continue; fi
+            round=$(( round - 1 )); continue      # full check again (someone may have died meanwhile)
+        fi
+        for w in $deadw; do
+            target_xy
+            log "kill $round/$total: window $(( w + 1 )) died; reviving and tracing back to $tx,$ty"
+            if (( w == front )); then
+                mb_pause
+                (cd "$HERE" && python3 mbtarget.py recover "$STATE" "$w" "${displays[$w]}" "$tx" "$ty") ||
+                    log "kill $round/$total: window 1's recovery had a problem: $(cat "$STATE/target-status" 2>/dev/null)"
+                mb_resume
+                safe_align
+            else
+                (cd "$HERE" && python3 mbtarget.py recover "$STATE" "$w" "${displays[$w]}" "$tx" "$ty") &
+            fi
+        done
+        # Correct substantial party drift only at a safe boundary: after combat has ended,
+        # before choosing the next mob. Small offsets are handled by per-client bar targeting.
+        aligned=$(cat "$STATE/aligned" 2>/dev/null || true)
+        if [[ "$aligned" =~ ^[0-9]+$ ]] && (( aligned > ${ALIGN_OVER:-8} )); then   # roughly together is enough
+            echo "aligning:$round/$total" >"$STATE/target-status"
+            log "kill $round/$total: party is $aligned tiles apart; aligning before the next target"
+            MB_ALIGN_TOL=1 "$HERE/multibox" align >/dev/null 2>&1 || true
+            aligned=$(cat "$STATE/align" 2>/dev/null || true)
+            if [[ "$aligned" != "aligned at "* && "$aligned" != "almost: off by 1 tile"* ]]; then
+                soft "align didn't finish: $aligned"; continue
+            fi
+            sleep 0.8   # let the tracker refresh offsets after alignment
+        fi
+        # Count mode: someone below REST_BELOW after the last fight -> everyone sits until full, stands up.
+        if (( (requested == 0 || requested > 1) && round > 1 && lowflag == 1 )); then
+            (cd "$HERE" && python3 mbtarget.py wait-combat "$STATE" "${displays[$front]}" "$round" "$total") || true
+            if ! (cd "$HERE" && python3 mbtarget.py calm "$STATE" "${displays[$front]}"); then
+                # still being hit: don't sit down under attack; fight the attacker first
+                log "kill $round/$total: HP low but under attack, fighting first"
+                danger=$(cd "$HERE" && MB_STATE="$STATE" python3 mbtarget.py danger "$STATE" "$front" "${displays[@]}" 2>/dev/null) || danger=-1
+                lowflag=0
+            fi
+        fi
+        if (( (requested == 0 || requested > 1) && round > 1 && lowflag == 1 )); then
+            log "kill $round/$total: HP low, resting"
+            echo standing >"$STATE/sit"; "$HERE/multibox" sit >/dev/null 2>&1   # sit down
+            local rw=0 rs="$sp_arg"
+            [[ "$rs" == - ]] && rs=""
+            (cd "$HERE" && python3 mbtarget.py rest-wait "$STATE" "${displays[$front]}" "$round" "$total" $rs) || rw=$?
+            echo sitting >"$STATE/sit"; "$HERE/multibox" sit >/dev/null 2>&1    # stand up
+            sleep 1.5
+            if (( rw == 5 )); then log "kill $round/$total: attacked while resting, defending"
+            elif (( rw != 0 )); then log "kill $round/$total: HP did not refill (status: $(cat "$STATE/target-status" 2>/dev/null))"; fi
+            # someone may have died while sitting: run the full check again before the next target
+            round=$(( round - 1 )); continue
+        fi
+        # Defend: a window that was hit or is fighting something else decides the next target
+        [[ "$danger" =~ ^[0-9]+$ ]] && (( danger != front )) && log "kill $round/$total: defending window $(( danger + 1 ))"
+        export MB_FOCUS="${danger:--1}"
+        if ! (cd "$HERE" && python3 mbtarget.py kill "$STATE" "$front" "${displays[@]}"); then
+            status=$(cat "$STATE/target-status" 2>/dev/null || true)
+            if [[ "$status" == AVOID:* ]]; then
+                avoid; round=$(( round - 1 )); continue
+            elif [[ "$status" == *"party member is dead"* ]]; then
+                log "kill $round/$total: a party member is dead"
+                round=$(( round - 1 )); continue      # the round check recovers them
+            elif [[ "$(cat "$STATE/target-threat" 2>/dev/null)" == 1 ]] && (( threat_tries < 5 )); then
+                # a strong mob is right here and moving: try to hit it again at once (no retreat,
+                # no waiting: running from it gets someone killed one by one)
+                threat_tries=$(( threat_tries + 1 ))
+                log "kill $round/$total: THREAT: click on it failed ($status); again ($threat_tries/5)"
+                threat_now=1; round=$(( round - 1 )); continue
+            elif [[ "$status" == *"no green mob health bar in box"* ||
+                  "$status" == *"same green bar not located in box"* ||
+                  "$status" == *"same green bar is ambiguous in box"* ]]; then
+                log "kill $round/$total: follower view missed the target bar; aligning the clients"
+                safe_align
+                soft "target not matched in a follower"; continue
+            elif [[ -f "$STATE/safespot" &&
+                    ( "$status" == *"no attackable mob"* || "$status" == *"no green mob health bar found"* ) ]] &&
+                 ! (cd "$HERE" && python3 mbtarget.py calm "$STATE" "${displays[$front]}"); then
+                # someone is being hit, but there's nothing we can click: retreat, rest, come back
+                log "kill $round/$total: losing HP to something we can't target; retreating to the safespot"
+                if ! to_safespot; then soft "retreat had a problem: $(cat "$STATE/target-status" 2>/dev/null)"; continue; fi
+                round=$(( round - 1 )); continue
+            elif [[ "$status" == *"no attackable mob"* || "$status" == *"no green mob health bar found"* ||
+                    "$status" == *"combat bar is visible"* ]]; then
+                # nothing to attack right now (all dead, respawning): keep looking. Every NO_MOB_WAIT
+                # seconds without a mob, walk back to the FIXATE spot (the hunt may have drifted).
+                local waited=0 found=0
+                while (( waited < NO_MOB_WAIT )); do
+                    echo "waiting:$round/$total:no mob in sight (${waited}s)" >"$STATE/target-status"
+                    sleep 1; waited=$(( waited + 2 ))   # look again at once (the search itself takes ~1 s)
+                    [[ "$(cat "$STATE/broadcast" 2>/dev/null)" == on ]] || break
+                    captcha_wait
+                    if (cd "$HERE" && python3 mbtarget.py kill "$STATE" "$front" "${displays[@]}"); then
+                        found=1; break
+                    fi
+                    [[ "$(cat "$STATE/target-status" 2>/dev/null)" == *"party member is dead"* ]] && break
+                    [[ "$(cat "$STATE/target-status" 2>/dev/null)" == AVOID:* ]] && break
+                done
+                if [[ "$(cat "$STATE/target-status" 2>/dev/null)" == AVOID:* ]]; then
+                    avoid; round=$(( round - 1 )); continue
+                fi
+                if (( ! found )); then
+                    log "kill $round/$total: no mob in sight for ${waited}s; checking the party and the spot"
+                    if (( ${#patrol[@]} )); then
+                        next_spot
+                    elif [[ -f "$STATE/anchor" ]]; then
+                        (cd "$HERE" && python3 mbtarget.py return-home "$STATE" --radius=5 "${displays[@]}") >/dev/null 2>&1 || true
+                    fi
+                    round=$(( round - 1 )); continue
+                fi
+            else
+                soft "target click failed: $status"; continue
+            fi
+        fi
+        if (( f1 )); then   # let the skill go off before anything else touches the input
+            echo "waiting:$round/$total:F1 cooldown" >"$STATE/target-status"
+            sleep "$F1_COOLDOWN"
+        fi
+        local wd=0
+        (cd "$HERE" && python3 mbtarget.py wait-death "$STATE" "$front" "$round" "$total" "${displays[@]}") || wd=$?
+        if (( wd == 4 )); then          # the click didn't start a fight: same kill again
+            misses=$(( misses + 1 ))
+            if (( misses > 6 )); then misses=0; soft "6 clicks in a row didn't start a fight"; continue; fi
+            log "kill $round/$total: click missed, retrying"
+            round=$(( round - 1 )); continue
+        fi
+        threat_tries=0
+        if (( wd == 7 )); then          # a strong mob came close mid-fight: everyone switches to it
+            log "kill $round/$total: THREAT: a strong mob came close; everyone switches to it"
+            threat_now=1; round=$(( round - 1 )); continue
+        fi
+        if (( wd == 8 )); then          # a MB_AVOID monster came close mid-fight: get away from it
+            avoid; round=$(( round - 1 )); continue
+        fi
+        if (( wd == 6 )); then          # a party member died mid-fight: recover first
+            log "kill $round/$total: a party member died during the fight"
+            round=$(( round - 1 )); continue
+        fi
+        if (( wd != 0 )); then soft "fight ended abnormally: $(cat "$STATE/target-status" 2>/dev/null)"; continue; fi
+        misses=0; fails=0; resets=0
+        log "kill $round/$total: done"
+        # drops lie on the ground (quest items too): A picks up everything within 7 tiles
+        (cd "$HERE" && python3 mbtarget.py pickup "$STATE" "${displays[@]}") >/dev/null 2>&1 &   # don't wait for it
+    done
+    echo "done:$total" >"$STATE/target-status"
+}
+
+# Stop a running KILL (the overlay's STOP): the loop and everything it started; pauses are
+# released by its exit trap (and mbcast drops pid-file pauses of dead processes anyway).
+cmd_kill_stop() {
+    local pid; pid=$(cat "$STATE/kill.pid" 2>/dev/null || echo 0)
+    if ! kill -0 "$pid" 2>/dev/null || ! tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q "multibox kill "; then
+        rm -f "$STATE/kill.pid"; return 0      # not running (or that pid is something else now)
+    fi
+    kill_tree() { local c; for c in $(pgrep -P "$1"); do kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null || true; }
+    kill_tree "$pid"
+    rm -f "$STATE/kill.pid"
+    echo "done:stopped" >"$STATE/target-status"
+    log "kill: stopped by the STOP button"
+}
+
+# Reload only the input router after a code update; leave the four game clients and their layout up.
+cmd_reload() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    # Reload must pick up a freshly edited C router too, including when launched from the overlay.
+    if [[ ! -x "$HERE/mbcast" || "$HERE/mbcast.c" -nt "$HERE/mbcast" ]]; then
+        make -C "$HERE" >/dev/null || die "could not build the updated broadcaster"
+    fi
+    read -r PROFILE COUNT <"$STATE/session"
+    load_profile "$PROFILE"
+    local displays=() i pid was_off=0
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+    [[ "$(cat "$STATE/broadcast" 2>/dev/null)" == off ]] && was_off=1
+    pid=$(cat "$STATE/mbcast.pid" 2>/dev/null || echo 0)
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -TERM "$pid" 2>/dev/null || true
+        for _ in {1..30}; do
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 0.1
+        done
+    fi
+    start_aim "${displays[@]}"
+    if (( was_off )); then
+        MB_START_OFF=1 MB_SKIP_START_HOOK=1 start_mbcast "${displays[@]}"
+    else
+        MB_SKIP_START_HOOK=1 start_mbcast "${displays[@]}"
+    fi
+    sleep 0.25
+    kill -0 "$(cat "$STATE/mbcast.pid")" 2>/dev/null || die "broadcaster failed to restart; see $STATE/mbcast.log"
+    pkill -f "^python3 $HERE/mbbutton.py " 2>/dev/null || true
+    python3 "$HERE/mbbutton.py" "$HERE/multibox" "$STATE" "$MONITOR" "$BASE_DISPLAY" \
+        >"$STATE/button.log" 2>&1 6>&- 7>&- 8>&- &
+    log "broadcaster and buttons reloaded; game clients stayed open"
+}
+
+start_helper() {   # i [--existing-done]: (re)start box i's window-manager helper, exactly one
+    local i=$1 d=$(( BASE_DISPLAY + $1 - 1 ))
+    pkill -f "mbwm.py :$d( |\$)" 2>/dev/null || true
+    # 7>&- 8>&-: don't inherit the fix/align lock files, or the lock stays held while it runs
+    python3 "$HERE/mbwm.py" ":$d" ${2:-} >/dev/null 2>&1 7>&- 8>&- &
+    echo $! >"$STATE/pin$i.pid"
+}
+
+# FIX: when broadcast misbehaves. Releases stuck keys/buttons and closes every open game window in
+# each box (so all UIs match again), restarts the helpers and, if needed, the broadcaster, turns
+# broadcast ON with window 1 in front, then runs ALIGN.
+cmd_fix() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    exec 7>"$STATE/fix.lock"; flock -n 7 || die "already fixing"
+    echo fixing >"$STATE/fix"
+    trap 'mb_release_all; [[ "$(cat "$STATE/fix" 2>/dev/null)" == fixing ]] && echo "interrupted" >"$STATE/fix"' EXIT
+    flock "$STATE/align.lock" true 2>/dev/null || true   # let a running ALIGN finish first
+    local displays=() i
+    for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+
+    local pid; pid=$(cat "$STATE/mbcast.pid" 2>/dev/null || echo 0)
+    if ! kill -0 "$pid" 2>/dev/null; then
+        log "fix: broadcaster was not running, restarting it"
+        load_profile "$PROFILE"
+        MB_START_OFF=1 start_mbcast "${displays[@]}"
+        sleep 0.5
+        pgrep -f "^python3 $HERE/mbbutton.py|^python3 mbbutton.py" >/dev/null || \
+            python3 "$HERE/mbbutton.py" "$HERE/multibox" "$STATE" "$MONITOR" "$BASE_DISPLAY" >"$STATE/button.log" 2>&1 6>&- 7>&- 8>&- &
+    fi
+    pgrep -f "mbtrack.py $STATE " >/dev/null || start_tracker "${displays[@]}"
+    pgrep -f "mbaim.py $STATE/aim.sock" >/dev/null || start_aim "${displays[@]}"
+    mb_pause   # the per-box keys and clicks must not be copied
+    for (( i = 1; i <= COUNT; i++ )); do start_helper "$i" --existing-done; done
+    sleep 0.5
+    local clean=1
+    (cd "$HERE" && python3 mbfix.py "${displays[@]}") >"$STATE/fix.out" 2>&1 || clean=0
+    if [[ "$(cat "$STATE/broadcast" 2>/dev/null)" != on ]]; then
+        kill -USR1 "$(cat "$STATE/mbcast.pid")" 2>/dev/null || true   # ON: the hook stacks, window 1 in front
+        sleep 1.5
+    fi
+    local msg
+    if (( clean )); then
+        MB_IN_FIX=1 cmd_align >/dev/null 2>&1 || true
+        msg="done; $(cat "$STATE/align" 2>/dev/null)"
+    else   # don't let ALIGN click into a window that still has something open
+        msg="partly, no ALIGN: $( { grep -v "closed" "$STATE/fix.out" || echo "mbfix failed"; } | tr '\n' ' ')"
+    fi
+    mb_resume
+    echo "$msg" >"$STATE/fix"
+    log "fix: $msg"
+}
+
+# Restart one box's client, e.g. after it crashed or hangs. The other boxes keep running.
+cmd_restart() {
+    local i=${1:-}
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    [[ "$i" =~ ^[0-9]+$ ]] && (( i >= 1 && i <= COUNT )) || die "usage: multibox restart 1..$COUNT"
+    load_profile "$PROFILE"
+    local d=$(( BASE_DISPLAY + i - 1 ))
+    [[ -e "/tmp/.X11-unix/X$d" ]] || die "box $i's window is gone; use multibox stop + start"
+    log "restarting box $i"
+    WINEPREFIX="$(prefix_for "$i")" "${WINESERVER:-wineserver}" -k 2>/dev/null || true
+    sleep 2
+    launch_client "$i"
+    wait_for 90 game_window ":$d" || log "box $i: game window did not appear yet"
+    log "box $i is back"
+}
+
+# A box whose X server died (2026-10-14: Xwayland :62 dropped its connection and the broadcaster
+# exited with it): a new X server + client for that box only; the other clients keep running.
+cmd_rebox() {
+    local i=${1:-}
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    [[ "$i" =~ ^[0-9]+$ ]] && (( i >= 1 && i <= COUNT )) || die "usage: multibox rebox 1..$COUNT"
+    load_profile "$PROFILE"
+    local d=$(( BASE_DISPLAY + i - 1 )) gw gh
+    if [[ -e "/tmp/.X$d-lock" ]] && ! kill -0 "$(tr -d ' ' <"/tmp/.X$d-lock")" 2>/dev/null; then
+        rm -f "/tmp/.X$d-lock" "/tmp/.X11-unix/X$d"     # left behind by the dead server
+    fi
+    WINEPREFIX="$(prefix_for "$i")" "${WINESERVER:-wineserver}" -k 2>/dev/null || true
+    read -r gw gh < <(game_res)
+    log "box $i: new X server and client"
+    start_box "$i" "$gw" "$gh"
+    wait_game "$i"
+    place_boxes "$gw" "$gh" "$( [[ "$(cat "$STATE/broadcast" 2>/dev/null)" == off ]] && echo "$LAYOUT_OFF" || echo "$LAYOUT_ON")"
+    keep_rendering
+    cmd_reload
+    # the click-offset tracker died with the old X server and reload doesn't start it: without
+    # it the followers' clicks land beside the mobs and no bolt is cast (2026-10-14)
+    local displays=() k
+    for (( k = 1; k <= COUNT; k++ )); do displays+=(":$(( BASE_DISPLAY + k - 1 ))"); done
+    start_tracker "${displays[@]}"
+    start_aim "${displays[@]}"
+}
+
+wait_game() {
+    local i=$1 d=$(( BASE_DISPLAY + i - 1 ))
+    wait_for 90 game_window ":$d" || log "box $i: game window did not appear yet"
+    start_helper "$i"
+}
+
+# mbwm.py runs for the life of each box and does the window-manager duties Wine waits for
+# (WM_STATE, focus). Without them Wine ignores focus, so DirectInput never sees mouse motion and
+# dragging fails. It never moves the game window: with no window manager Wine ignores outside
+# moves and keeps mapping the mouse with the old origin, so every click would land off target.
+
+# Box under the user's focus (1..COUNT), or empty.
+active_box() {
+    hyprctl activewindow -j 2>/dev/null | python3 -c '
+import json, sys
+t = json.load(sys.stdin).get("title", "")
+base, n = int(sys.argv[1]), int(sys.argv[2])
+for i in range(1, n + 1):
+    if t == "Xwayland on :%d" % (base + i - 1): print(i)' "$BASE_DISPLAY" "$COUNT" 2>/dev/null || true
+}
+
+place_boxes() {   # gw gh mode
+    local gw=$1 gh=$2 mode=$3 i mx my mw mh x y addr top
+    read -r mx my mw mh < <(monitor_geom)
+    top=$(active_box); [[ -z "$top" ]] && top=$(cat "$STATE/front" 2>/dev/null || echo 1)
+    [[ "$mode" == grid || "$LEADER" == 1 ]] && top=1   # box 1 in front
+    for (( i = 1; i <= COUNT; i++ )); do
+        addr=$(xw_addr $(( BASE_DISPLAY + i - 1 ))) || continue
+        [[ -z "$addr" ]] && continue
+        read -r x y < <(box_pos "$i" $(box_logical $(( gw + PAD_W )) $(( gh + PAD_H ))) "$mode")
+        hyprctl -q dispatch movewindowpixel "exact $(( mx + x )) $(( my + y )),address:$addr"
+    done
+    # raise from the last box down, so the lower-numbered boxes end up on top, and $top last of all
+    for (( i = COUNT; i >= 1; i-- )); do
+        (( i == top )) && continue
+        addr=$(xw_addr $(( BASE_DISPLAY + i - 1 ))) && [[ -n "$addr" ]] && \
+            hyprctl -q dispatch alterzorder "top,address:$addr"
+    done
+    raise_box "$top" || true
+}
+
+# Keep every box rendering while its workspace is hidden (the user works on another workspace):
+# Hyprland stops frame callbacks for hidden windows and the games fell to 1 fps (a dead leader
+# couldn't even click Revive). render_unfocused fixes it, but only for a window that has been
+# focused at least once after the property was set (tested 2026-10-14, Hyprland 0.56).
+keep_rendering() {
+    local i addr ws
+    ws=$(hyprctl activeworkspace -j | python3 -c 'import json, sys; print(json.load(sys.stdin)["id"])' 2>/dev/null || true)
+    hyprctl -q keyword misc:render_unfocused_fps "${FPS_LIMIT:-30}"
+    # 5 DXVK clients fill the laptop iGPU's 512 MB VRAM: with blur/animations/shadows on top the
+    # gfx ring timed out and Hyprland crashed twice (2026-10-17). Off while the boxes run (session only).
+    hyprctl -q keyword decoration:blur:enabled false
+    hyprctl -q keyword decoration:shadow:enabled false
+    hyprctl -q keyword animations:enabled false
+    for (( i = COUNT; i >= 1; i-- )); do
+        addr=$(xw_addr $(( BASE_DISPLAY + i - 1 ))) && [[ -n "$addr" ]] || continue
+        hyprctl -q dispatch setprop "address:$addr" render_unfocused 1
+        hyprctl -q dispatch focuswindow "address:$addr"
+        sleep 0.2
+    done
+    raise_box 1 || true
+    # back to the workspace the user was on (focusing the boxes switched to theirs)
+    [[ -n "$ws" && "$ws" != "$BOX_WS" ]] && hyprctl -q dispatch workspace "$ws"
+    return 0
+}
+
+raise_box() {   # box number -> bring its window to the front
+    local addr; addr=$(xw_addr $(( BASE_DISPLAY + $1 - 1 )))
+    [[ -n "$addr" ]] || return 1
+    hyprctl -q dispatch focuswindow "address:$addr"
+    hyprctl -q dispatch alterzorder "top,address:$addr"
+    echo "$1" >"$STATE/front"
+    pkill -RTMIN+11 -x waybar 2>/dev/null || true
+}
+
+cmd_next() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    local cur; cur=$(cat "$STATE/front" 2>/dev/null || echo 1)
+    raise_box $(( cur % COUNT + 1 ))
+}
+
+cmd_start() {
+    [[ -n "${1:-}" ]] && PROFILE=$1
+    [[ -n "${2:-}" ]] && COUNT=$2
+    (( COUNT >= 1 && COUNT <= 8 )) || die "box count must be 1..8"
+    [[ -f "$STATE/mbcast.pid" ]] && kill -0 "$(cat "$STATE/mbcast.pid")" 2>/dev/null && die "already running (multibox stop first)"
+    command -v Xwayland >/dev/null || die "Xwayland not installed"
+    if [[ ! -x "$HERE/mbcast" || "$HERE/mbcast.c" -nt "$HERE/mbcast" ||
+          ! -x "$HERE/mbprime" || "$HERE/mbprime.c" -nt "$HERE/mbprime" ]]; then
+        make -C "$HERE" >/dev/null
+    fi
+    load_profile "$PROFILE"
+    mkdir -p "$STATE"; find "$STATE" -mindepth 1 -maxdepth 1 -type f -delete
+    echo "$PROFILE $COUNT" >"$STATE/session"
+
+    local gw gh i
+    read -r gw gh < <(game_res)
+    log "profile $PROFILE, $COUNT boxes, game ${gw}x${gh}"
+    for (( i = 1; i <= COUNT; i++ )); do start_box "$i" "$gw" "$gh"; done
+    for (( i = 1; i <= COUNT; i++ )); do wait_game "$i"; done
+    place_boxes "$gw" "$gh" "$LAYOUT_ON"
+    keep_rendering
+
+    if (( COUNT > 1 )); then
+        local displays=()
+        for (( i = 1; i <= COUNT; i++ )); do displays+=(":$(( BASE_DISPLAY + i - 1 ))"); done
+        start_aim "${displays[@]}"
+        start_mbcast "${displays[@]}"
+        start_tracker "${displays[@]}"
+        sleep 0.3
+        python3 "$HERE/mbbutton.py" "$HERE/multibox" "$STATE" "$MONITOR" "$BASE_DISPLAY" >"$STATE/button.log" 2>&1 &
+        hyprctl -q keyword bind "$TOGGLE_BIND, exec, $HERE/multibox toggle"
+        hyprctl -q keyword bind "$NEXT_BIND, exec, $HERE/multibox next"
+    fi
+    log "ready. Broadcast is ON: input in any box goes to all of them. Super+\` (or Pause) toggles it,"
+    log "e.g. off while you log each box into its own account."
+}
+
+cmd_stop() {
+    local f pfx d
+    for f in "$STATE"/mbcast.pid "$STATE"/pin*.pid; do
+        [[ -f "$f" ]] && kill "$(cat "$f")" 2>/dev/null || true
+    done
+    for f in "$STATE"/box*.prefix; do
+        [[ -f "$f" ]] || continue
+        pfx=$(cat "$f")
+        if [[ -f "$STATE/session" ]]; then load_profile "$(cut -d' ' -f1 "$STATE/session")"; fi
+        WINEPREFIX="$pfx" "${WINESERVER:-wineserver}" -k 2>/dev/null || true
+    done
+    for (( d = BASE_DISPLAY; d < BASE_DISPLAY + 8; d++ )); do
+        pkill -f "^Xwayland :$d " 2>/dev/null || true
+    done
+    hyprctl -q keyword unbind "$TOGGLE_BIND" 2>/dev/null || true
+    hyprctl -q keyword unbind "$NEXT_BIND" 2>/dev/null || true
+    find "$STATE" -mindepth 1 -maxdepth 1 -type f -delete
+    pkill -RTMIN+11 -x waybar 2>/dev/null || true   # hide the indicator
+    log "stopped"
+}
+
+cmd_toggle() {
+    [[ -f "$STATE/mbcast.pid" ]] || die "not running"
+    kill -USR1 "$(cat "$STATE/mbcast.pid")"
+}
+
+cmd_status() {
+    [[ -f "$STATE/session" ]] || { echo "not running"; return; }
+    read -r PROFILE COUNT <"$STATE/session"
+    echo "profile $PROFILE, $COUNT boxes"
+    local i
+    for (( i = 1; i <= COUNT; i++ )); do
+        local p; p=$(cat "$STATE/box$i.pid" 2>/dev/null || echo 0)
+        printf '  box %d  :%d  %s\n' "$i" $(( BASE_DISPLAY + i - 1 )) "$(kill -0 "$p" 2>/dev/null && echo running || echo exited)"
+    done
+    tail -n 3 "$STATE/mbcast.log" 2>/dev/null | sed 's/^/  /'
+}
+
+cmd_layout() {
+    [[ -f "$STATE/session" ]] || die "not running"
+    read -r PROFILE COUNT <"$STATE/session"
+    load_profile "$PROFILE"
+    local gw gh; read -r gw gh < <(game_res)
+    place_boxes "$gw" "$gh" "$( [[ "$(cat "$STATE/broadcast" 2>/dev/null)" == off ]] && echo "$LAYOUT_OFF" || echo "$LAYOUT_ON")"
+}
+
+# Called by mbcast whenever broadcast turns on or off: stack the boxes, or spread them out.
+cmd_state() {
+    [[ -f "$STATE/session" ]] || exit 0
+    read -r PROFILE COUNT <"$STATE/session"
+    load_profile "$PROFILE"
+    local gw gh; read -r gw gh < <(game_res)
+    exec 9>"$STATE/layout.lock"; flock 9   # quick double clicks: one re-layout at a time
+    # use the state as it is now, not $1: queued hooks can run out of order
+    local now; now=$(cat "$STATE/broadcast" 2>/dev/null || echo on)
+    log "broadcast $now"
+    place_boxes "$gw" "$gh" "$( [[ "$now" == off ]] && echo "$LAYOUT_OFF" || echo "$LAYOUT_ON")"
+    # broadcast ON: reset every camera, a camera turned while it was OFF would make clicks miss
+    [[ "$now" == on && "$1" == on ]] && cmd_camera
+}
+
+cmd_waybar() {
+    local pid; pid=$(cat "$STATE/mbcast.pid" 2>/dev/null) || pid=""
+    if [[ -z "$pid" ]] || ! kill -0 "$pid" 2>/dev/null; then echo '{"text": ""}'; return; fi
+    local front; front=$(cat "$STATE/front" 2>/dev/null || echo 1)
+    local hint="\\nLeft click or Super+\` toggles. Right click or Super+Shift+\` shows the next box."
+    if [[ "$(cat "$STATE/broadcast" 2>/dev/null)" == off ]]; then
+        echo "{\"text\": \"MB OFF · $front\", \"class\": \"off\", \"tooltip\": \"Multibox: broadcast OFF, each box gets only its own input. Box $front is in front.$hint\"}"
+    else
+        echo "{\"text\": \"MB ON · $front\", \"class\": \"on\", \"tooltip\": \"Multibox: broadcast ON, input in one box goes to all boxes. Box $front is in front.$hint\"}"
+    fi
+}
+
+case "${1:-}" in
+    start)  shift; cmd_start "$@" ;;
+    stop)   cmd_stop ;;
+    toggle) cmd_toggle ;;
+    status) cmd_status ;;
+    layout) cmd_layout ;;
+    waybar) cmd_waybar ;;
+    next)   cmd_next ;;
+    restart) shift; cmd_restart "$@" ;;
+    rebox)  shift; cmd_rebox "$@" ;;
+    align)  cmd_align ;;
+    camera) cmd_camera ;;
+    sit)    cmd_sit ;;
+    kill)   shift; cmd_target_kill "$@" ;;
+    kill-stop) cmd_kill_stop ;;
+    fixate) shift; cmd_fixate "$@" ;;
+    safespot) cmd_safespot ;;
+    goto)   shift; cmd_goto "$@" ;;
+    reload) cmd_reload ;;
+    fix)    cmd_fix ;;
+    _state) cmd_state "${2:-on}" ;;
+    *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac
